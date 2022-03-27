@@ -5,18 +5,60 @@ interface Vec3I {
 }
 
 export class Vec3 {
-    public x: number;
-    public y: number;
-    public z: number;
+    private _x: number;
+    private _y: number;
+    private _z: number;
+
+    private dirty: boolean;
+    public isDirty(): boolean {
+        return this.dirty;
+    }
+    public getDirtyClear(): boolean {
+        let dirty = this.dirty;
+        this.dirty = false;
+        return dirty;
+    }
+    public clearDirty() {
+        this.dirty = false;
+    }
 
     constructor(x: number = 0, y: number = 0, z: number = 0) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.set(x, y, z);
+    }
+
+    public set(x: number, y: number, z: number) {
+        this._x = x;
+        this._y = y;
+        this._z = z;
+        this.dirty = true;
+    }
+
+    get z(): number {
+        return this._z;
+    }
+    set z(value: number) {
+        this._z = value;
+        this.dirty = true;
+    }
+    get y(): number {
+        return this._y;
+    }
+    set y(value: number) {
+        this._y = value;
+        this.dirty = true;
+    }
+    get x(): number {
+        return this._x;
+    }
+    set x(value: number) {
+        this._x = value;
+        this.dirty = true;
     }
 }
 
-export type ShapeCommonParam = { color: string, position: Vec3I, rotate: Vec3I, scale: Vec3I, stroke: number }
+export type AnchorParam = { addTo?: undefined, shape: 'anchor' }
+
+export type ShapeCommonParam = AnchorParam & { color: string, stroke: number }
 
 export type RectParam = ShapeCommonParam & { shape: 'rect', width: number, height: number }
 
@@ -32,4 +74,6 @@ export type PolylineParam = ShapeCommonParam & { shape: 'polyline', path: Vec3I[
 
 //type PathParam TODO
 
-export type ShapeParam = RectParam | RoundRectParam | EllipseParam | PolygonParam | SphereParam | PolylineParam;
+//TODO more types
+
+export type ShapeParam = AnchorParam | RectParam | RoundRectParam | EllipseParam | PolygonParam | SphereParam | PolylineParam;
