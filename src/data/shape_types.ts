@@ -58,13 +58,13 @@ export class Vec3 {
 
 export type AnchorParam = { addTo?: undefined, shape: 'anchor' }
 
-export type ShapeCommonParam = AnchorParam & { color: string, stroke: number }
+export type ShapeCommonParam = { addTo?: undefined, color: string, stroke: number }
 
 export type RectParam = ShapeCommonParam & { shape: 'rect', width: number, height: number }
 
-export type RoundRectParam = RectParam & { shape: 'round-rect', cornerRadius: number }
+export type RoundRectParam = ShapeCommonParam & { shape: 'round-rect', width: number, height: number, cornerRadius: number }
 
-export type EllipseParam = ShapeCommonParam & { shape: 'ellipse', diameter: number, quarters: 1 | 2 | 3 | 4 }
+export type EllipseParam = ShapeCommonParam & { shape: 'ellipse', diameter: number, quarters?: 1 | 2 | 3 | 4 }
 
 export type PolygonParam = ShapeCommonParam & { shape: 'polygon', radius: number, sides: number }
 
