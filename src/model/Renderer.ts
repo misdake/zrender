@@ -1,13 +1,20 @@
 import { Scene } from './Scene';
 import * as Zdog from 'zdog';
+import { UserInput, UserInputController } from './UserInput';
+
+type TickFunction = (dt: number, input: UserInput) => void;
 
 export class Renderer {
 
     private readonly canvas: HTMLCanvasElement;
     private zdog: Zdog.Illustration;
 
+    private readonly inputController: UserInputController;
+
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
+        this.inputController = new UserInputController(canvas);
+        this.inputController.attach();
 
         this.zdog = new Zdog.Illustration({
             element: document.getElementById('zdog-canvas') as HTMLCanvasElement,
@@ -25,9 +32,8 @@ export class Renderer {
         this._scene = value;
     }
 
-
-    private tick: () => void = null;
-    start(tick: () => void) {
+    private tick: TickFunction = null;
+    start(tick: TickFunction) {
         this.tick = tick;
         this.animate();
     }
@@ -35,7 +41,7 @@ export class Renderer {
     animate() {
         if (this.scene) {
             if (this.tick) {
-                this.tick(); //TODO dt
+                this.tick(0, this.inputController.tick()); //TODO dt
             }
             this.scene.root.update();
             this.scene.root.drawable.zdog.updateGraph();
@@ -44,4 +50,5 @@ export class Renderer {
         requestAnimationFrame(() => this.animate());
     }
 
+    //TODO destroy?
 }

@@ -37,6 +37,9 @@ scene.root.addChild(new SceneNode('square', {
 
 renderer.scene = scene;
 
-renderer.start(() => {
-    scene.root.rotation.y += 0.05;
+renderer.start((dt, input) => {
+    let pressed = input.keyboard.pressed;
+    // console.log(pressed);
+    if (pressed['a']) scene.root.rotation.y -= 0.05;
+    if (pressed['d']) scene.root.rotation.y += 0.05;
 });
