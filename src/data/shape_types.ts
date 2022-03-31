@@ -60,9 +60,9 @@ export type AnchorParam = { addTo?: undefined, shape: 'anchor' }
 
 export type ShapeCommonParam = { addTo?: undefined, color: string, stroke: number }
 
-export type RectParam = ShapeCommonParam & { shape: 'rect', width: number, height: number }
+export type RectParam = ShapeCommonParam & { shape: 'rect', width: number, height: number, fill: boolean }
 
-export type RoundRectParam = ShapeCommonParam & { shape: 'round-rect', width: number, height: number, cornerRadius: number }
+export type RoundRectParam = ShapeCommonParam & { shape: 'round-rect', width: number, height: number, cornerRadius: number, fill: boolean }
 
 export type EllipseParam = ShapeCommonParam & { shape: 'ellipse', diameter: number, quarters?: 1 | 2 | 3 | 4 }
 
