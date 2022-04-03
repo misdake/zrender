@@ -1,11 +1,19 @@
 import { Scene } from './model/Scene';
 import { SceneNode } from './model/SceneNode';
-import { Renderer } from './model/Renderer';
+import { Renderer, RendererOptions } from './model/Renderer';
 
-let renderer = new Renderer(document.getElementById('zdog-canvas') as HTMLCanvasElement);
+let rendererOptions: RendererOptions = {
+    maxTick: 0.1,
+    canvasBackground: '#ccc',
+    aspectRatio: 4 / 3,
+};
+let container = document.getElementById('container') as HTMLDivElement;
+
+let renderer = new Renderer(container, rendererOptions);
 
 let scene = new Scene();
 
+let z: SceneNode;
 scene.root.addChild(new SceneNode('circle', {
     shape: 'ellipse',
     diameter: 20,
@@ -13,7 +21,7 @@ scene.root.addChild(new SceneNode('circle', {
     color: 'rgba(0.5, 0.4, 0.8, 0.2)',
 }).setPosition(0, 0, 10));
 
-scene.root.addChild(new SceneNode('z', {
+scene.root.addChild(z = new SceneNode('z', {
     shape: 'polyline',
     path: [
         {x: -32, y: -40, z: 0}, // start at top left
@@ -40,6 +48,10 @@ renderer.scene = scene;
 renderer.start((dt, input) => {
     let pressed = input.keyboard.pressed;
     // console.log(pressed);
-    if (pressed['a']) scene.root.rotation.y -= 0.05;
-    if (pressed['d']) scene.root.rotation.y += 0.05;
+    if (pressed['ArrowLeft']) scene.root.rotation.y -= dt;
+    if (pressed['ArrowRight']) scene.root.rotation.y += dt;
+    if (pressed['a']) z.position.x -= dt * 10;
+    if (pressed['d']) z.position.x += dt * 10;
+    if (pressed['w']) z.position.y -= dt * 10;
+    if (pressed['s']) z.position.y += dt * 10;
 });
