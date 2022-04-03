@@ -51,7 +51,6 @@ export class Renderer {
         this.zdog = new Zdog.Illustration({
             element: canvas,
             zoom: 5,
-            // centered: false,
         });
     }
 
@@ -96,7 +95,7 @@ export class Renderer {
     private checkResize() {
         let cw = this.container.clientWidth;
         let ch = this.container.clientHeight;
-        let pr = window.devicePixelRatio; //TODO use pr
+        let pr = window.devicePixelRatio;
 
         if (cw !== this.lastContainerWidth || ch !== this.lastContainerHeight) {
             let targetWidth = cw;
