@@ -1,4 +1,4 @@
-import { ShapeParam, Vec3 } from '../data/shape_types';
+import { ShapeParam, Vec3 } from './shape_types';
 import * as Zdog from 'zdog';
 
 export class Drawable {

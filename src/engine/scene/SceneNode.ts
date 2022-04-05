@@ -1,5 +1,5 @@
-import { ShapeParam, Vec3 } from '../data/shape_types';
-import { Drawable } from './Drawable';
+import { ShapeParam, Vec3 } from '../components/shape_types';
+import { Drawable } from '../components/Drawable';
 
 export class SceneNode {
     public readonly name: string;

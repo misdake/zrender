@@ -1,4 +1,4 @@
-import { Scene } from './Scene';
+import { Scene } from './scene/Scene';
 import * as Zdog from 'zdog';
 import { UserInput, UserInputController } from './UserInput';
 
