@@ -30,7 +30,10 @@ export class SceneNode {
 
     updateSelf(force: boolean = false): boolean {
         //check position/rotation/scale, update self
-        let dirty = this.position.getDirtyClear() || this.rotation.getDirtyClear() || this.scale.getDirtyClear();
+        let dirty1 = this.position.clearDirty();
+        let dirty2 = this.rotation.clearDirty();
+        let dirty3 = this.scale.clearDirty();
+        let dirty = dirty1 || dirty2 || dirty3;
         if (force || dirty) {
             this.drawable.update(this.position, this.rotation, this.scale);
         }

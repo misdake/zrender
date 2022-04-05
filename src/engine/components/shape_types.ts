@@ -13,13 +13,10 @@ export class Vec3 {
     public isDirty(): boolean {
         return this.dirty;
     }
-    public getDirtyClear(): boolean {
+    public clearDirty(): boolean {
         let dirty = this.dirty;
         this.dirty = false;
         return dirty;
-    }
-    public clearDirty() {
-        this.dirty = false;
     }
 
     constructor(x: number = 0, y: number = 0, z: number = 0) {
