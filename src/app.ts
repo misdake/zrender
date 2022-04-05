@@ -1,6 +1,7 @@
 import { Scene } from './model/Scene';
 import { SceneNode } from './model/SceneNode';
 import { Renderer, RendererOptions } from './model/Renderer';
+import { SoundPlayer } from './model/SoundPlayer';
 
 let rendererOptions: RendererOptions = {
     maxTick: 0.1,
@@ -48,6 +49,7 @@ renderer.scene = scene;
 renderer.start((dt, input) => {
     let pressed = input.keyboard.pressed;
     // console.log(pressed);
+    //TODO extract key name constants
     if (pressed['ArrowLeft']) scene.root.rotation.y -= dt;
     if (pressed['ArrowRight']) scene.root.rotation.y += dt;
     if (pressed['a']) z.position.x -= dt * 10;
@@ -60,3 +62,14 @@ renderer.preRender = (context, width, height) => {
     context.fillStyle = 'black';
     context.fillRect(0, 0, 20, 20);
 };
+
+let soundPlayer = new SoundPlayer();
+const SoundAssets = {
+    fire: 'fire.wav',
+    move: 'move.wav',
+    powerup: 'powerup.wav',
+};
+soundPlayer.init(SoundAssets, 'assets/sound/').then(() => {
+    (window as any).play1 = () => soundPlayer.play(SoundAssets.fire);
+});
+

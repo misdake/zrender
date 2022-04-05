@@ -102,7 +102,7 @@ export class Renderer {
     }
 
 
-    animate() {
+    private animate() {
         this.checkResize();
 
         //TODO extract clock
