@@ -70,6 +70,6 @@ const SoundAssets = {
     powerup: 'powerup.wav',
 };
 soundPlayer.init(SoundAssets, 'assets/sound/').then(() => {
-    (window as any).play1 = () => soundPlayer.play(SoundAssets.fire);
+    (window as any).play1 = (volume: number) => soundPlayer.play(SoundAssets.fire, volume);
 });
 

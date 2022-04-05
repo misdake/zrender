@@ -27,15 +27,21 @@ export class SoundPlayer {
 
     private sounds = new Map<string, AudioBuffer>();
 
-    play(asset: string): AudioBufferSourceNode {
+    play(asset: string, volume: number = 1.0, loop: boolean = false): AudioBufferSourceNode {
         console.log(asset, this.sounds);
         let sound = this.sounds.get(asset.valueOf());
         if (sound) {
             let context = SoundPlayer.context;
             let bufferSource = context.createBufferSource();
+
+            let gainNode = context.createGain();
+            gainNode.gain.value = volume; // [0, 1]
+            gainNode.connect(context.destination);
+
             bufferSource.buffer = sound;
-            bufferSource.connect(context.destination);
+            bufferSource.connect(gainNode);
             bufferSource.start();
+            bufferSource.loop = loop;
             return bufferSource;
         }
         return null;
