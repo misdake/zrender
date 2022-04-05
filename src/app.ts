@@ -55,3 +55,8 @@ renderer.start((dt, input) => {
     if (pressed['w']) z.position.y -= dt * 10;
     if (pressed['s']) z.position.y += dt * 10;
 });
+
+renderer.preRender = (context, width, height) => {
+    context.fillStyle = 'black';
+    context.fillRect(0, 0, 20, 20);
+};

@@ -2,18 +2,23 @@ import { Scene } from './Scene';
 import * as Zdog from 'zdog';
 import { UserInput, UserInputController } from './UserInput';
 
+type CanvasRenderFunction = (context: CanvasRenderingContext2D, width: number, height: number) => void;
 type TickFunction = (dt: number, input: UserInput) => void;
 
 export interface RendererOptions {
     canvasBackground?: string;
     maxTick?: number;
     aspectRatio?: number;
+    preRender?: CanvasRenderFunction;
+    postRender?: CanvasRenderFunction;
 }
 
 let defaultRendererOptions: RendererOptions = {
     canvasBackground: undefined,
     maxTick: Number.POSITIVE_INFINITY,
     aspectRatio: undefined,
+    preRender: undefined,
+    postRender: undefined,
 };
 
 function now() {
@@ -25,9 +30,14 @@ export class Renderer {
 
     private readonly container: HTMLDivElement;
     private readonly canvas: HTMLCanvasElement;
+    private readonly ctx: CanvasRenderingContext2D;
     private readonly inputController: UserInputController;
 
     private zdog: Zdog.Illustration;
+
+    //from option and configurable
+    public preRender: CanvasRenderFunction;
+    public postRender: CanvasRenderFunction;
 
     constructor(container: HTMLDivElement, options?: RendererOptions) {
         this.options = Object.assign({}, defaultRendererOptions, options);
@@ -44,6 +54,10 @@ export class Renderer {
         if (this.options.canvasBackground) canvas.style.background = this.options.canvasBackground;
         this.container.append(canvas);
         this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+
+        this.preRender = this.options.preRender;
+        this.postRender = this.options.postRender;
 
         this.inputController = new UserInputController(canvas);
         this.inputController.attach();
@@ -52,6 +66,23 @@ export class Renderer {
             element: canvas,
             zoom: 5,
         });
+
+        this.zdog.onPrerender = () => {
+            if (this.preRender) {
+                this.ctx.save();
+                this.ctx.resetTransform();
+                this.preRender(this.ctx, this.width, this.height);
+                this.ctx.restore();
+            }
+        };
+    }
+
+
+    get width(): number {
+        return this.canvas.width;
+    }
+    get height(): number {
+        return this.canvas.height;
     }
 
 
@@ -70,6 +101,7 @@ export class Renderer {
         this.animate();
     }
 
+
     animate() {
         this.checkResize();
 
@@ -83,19 +115,29 @@ export class Renderer {
             if (this.tick) {
                 this.tick(dt, this.inputController.tick());
             }
+
+            if (this.preRender) this.preRender(this.ctx, this.width, this.height);
+
             this.scene.root.update();
             this.scene.root.drawable.zdog.updateGraph();
             this.zdog.updateRenderGraph(this.scene.root.drawable.zdog);
+
+            if (this.postRender) {
+                this.ctx.save();
+                this.ctx.resetTransform();
+                this.postRender(this.ctx, this.width, this.height);
+                this.ctx.restore();
+            }
         }
         requestAnimationFrame(() => this.animate());
     }
+
 
     private lastContainerWidth: number = 0;
     private lastContainerHeight: number = 0;
     private checkResize() {
         let cw = this.container.clientWidth;
         let ch = this.container.clientHeight;
-        let pr = window.devicePixelRatio;
 
         if (cw !== this.lastContainerWidth || ch !== this.lastContainerHeight) {
             let targetWidth = cw;
@@ -108,10 +150,6 @@ export class Renderer {
                     targetHeight = targetWidth / this.options.aspectRatio;
                 }
             }
-            this.canvas.style.width = `${targetWidth}px`;
-            this.canvas.style.height = `${targetHeight}px`;
-            this.canvas.width = targetWidth * pr;
-            this.canvas.height = targetHeight * pr;
 
             this.zdog.setSize(targetWidth, targetHeight);
             this.zdog.zoom = targetHeight / 100;
