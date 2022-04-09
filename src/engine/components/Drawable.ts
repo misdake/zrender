@@ -1,6 +1,9 @@
 import { ShapeParam, Vec3 } from './shape_types';
 import * as Zdog from 'zdog';
 
+export type DrawableParam = ShapeParam;
+
+
 export class Drawable {
     public readonly param: ShapeParam;
     public readonly zdog: Zdog.Anchor;

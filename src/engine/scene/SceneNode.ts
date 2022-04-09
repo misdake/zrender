@@ -1,5 +1,6 @@
-import { ShapeParam, Vec3 } from '../components/shape_types';
+import { Vec3 } from '../components/shape_types';
 import { Drawable } from '../components/Drawable';
+import { ComponentParam } from '../components/ComponentParam';
 
 export class SceneNode {
     public readonly name: string;
@@ -11,12 +12,13 @@ export class SceneNode {
 
     public readonly drawable: Drawable;
 
-    constructor(name?: string, shape?: ShapeParam) {
+    constructor(name?: string, components?: ComponentParam) {
         this.name = name || '';
         this.children = []; //TODO add parent control
 
-        if (shape) {
-            this.drawable = new Drawable(shape);
+        let drawableParam = components && components.drawable;
+        if (drawableParam) {
+            this.drawable = new Drawable(drawableParam);
         } else {
             this.drawable = new Drawable({shape: 'anchor'});
         }
@@ -48,15 +50,15 @@ export class SceneNode {
         return dirty;
     }
 
-    setPosition(x?: number, y?: number, z?: number) : SceneNode {
+    setPosition(x?: number, y?: number, z?: number): SceneNode {
         this.position.set(x, y, z);
         return this;
     }
-    setRotation(x?: number, y?: number, z?: number) : SceneNode {
+    setRotation(x?: number, y?: number, z?: number): SceneNode {
         this.rotation.set(x, y, z);
         return this;
     }
-    setScale(x?: number, y?: number, z?: number) : SceneNode {
+    setScale(x?: number, y?: number, z?: number): SceneNode {
         this.scale.set(x, y, z);
         return this;
     }
