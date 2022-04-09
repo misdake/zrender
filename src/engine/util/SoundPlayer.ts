@@ -1,18 +1,26 @@
+export type SoundAsset = string;
+export type SoundAssets = { [key: string]: SoundAsset };
+
 export class SoundPlayer {
 
-    private context = new AudioContext();
+    private static instances: SoundPlayer[] = [];
+    static getInstance(channel: number) {
+        if (!this.instances[channel]) this.instances[channel] = new SoundPlayer();
+        return this.instances[channel];
+    }
 
-    init(assets: { [key: string]: string }, baseFolder: string) {
+    static
+    load(assets: SoundAssets, baseFolder: string): Promise<void[]> {
         return Promise.all(Object.values(assets).map(file => {
-            console.log('loading sound', file);
+            // console.log('loading sound', file);
             let promise = new Promise<void>(resolve => {
                 let request = new XMLHttpRequest();
                 request.open('GET', baseFolder + file, true);
                 request.responseType = 'arraybuffer';
                 request.onload = () => {
-                    this.context.decodeAudioData(request.response).then(buffer => {
+                    this.loadContext.decodeAudioData(request.response).then(buffer => {
                         this.sounds.set(file, buffer);
-                        console.log('loaded sound', file);
+                        // console.log('loaded sound', file);
                         resolve();
                     }).catch(() => {
                         resolve(); //force resolve
@@ -24,11 +32,16 @@ export class SoundPlayer {
         }));
     }
 
-    private sounds = new Map<string, AudioBuffer>();
+    private constructor() {
+    }
 
-    play(asset: string, volume: number = 1.0, loop: boolean = false): AudioBufferSourceNode {
-        console.log(asset, this.sounds);
-        let sound = this.sounds.get(asset.valueOf());
+    private static loadContext = new AudioContext();
+    private context = new AudioContext();
+
+    private static sounds = new Map<string, AudioBuffer>();
+
+    play(asset: string, volume: number, loop: boolean): AudioBufferSourceNode {
+        let sound = SoundPlayer.sounds.get(asset.valueOf());
         if (sound) {
             let context = this.context;
             let bufferSource = context.createBufferSource();

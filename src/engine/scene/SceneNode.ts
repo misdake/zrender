@@ -1,6 +1,7 @@
 import { Vec3 } from '../components/shape_types';
 import { Drawable } from '../components/Drawable';
 import { ComponentParam } from '../components/ComponentParam';
+import { Sfx } from '../components/Sfx';
 
 export class SceneNode {
     public readonly name: string;
@@ -11,6 +12,7 @@ export class SceneNode {
     public readonly scale: Vec3 = new Vec3(1, 1, 1);
 
     public readonly drawable: Drawable;
+    public readonly sfx: Sfx;
 
     constructor(name?: string, components?: ComponentParam) {
         this.name = name || '';
@@ -21,6 +23,11 @@ export class SceneNode {
             this.drawable = new Drawable(drawableParam);
         } else {
             this.drawable = new Drawable({shape: 'anchor'});
+        }
+
+        let sfxParam = components && components.sfx;
+        if (sfxParam) {
+            this.sfx = new Sfx(sfxParam.assets, sfxParam.channel);
         }
     }
 

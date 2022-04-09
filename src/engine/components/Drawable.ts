@@ -1,16 +1,15 @@
 import { ShapeParam, Vec3 } from './shape_types';
 import * as Zdog from 'zdog';
 
-export type DrawableParam = ShapeParam;
-
+export type DrawableAsset = ShapeParam
 
 export class Drawable {
-    public readonly param: ShapeParam;
+    public readonly asset: DrawableAsset;
     public readonly zdog: Zdog.Anchor;
 
-    constructor(param: ShapeParam) {
-        this.param = param;
-        this.zdog = createZdogObj(param);
+    constructor(asset: DrawableAsset) {
+        this.asset = asset;
+        this.zdog = createZdogObj(asset);
     }
 
     update(position: Vec3, rotation: Vec3, scale: Vec3) {
@@ -20,20 +19,20 @@ export class Drawable {
     }
 }
 
-const zdogObjConstructors: { [key: string]: ((param: ShapeParam) => Zdog.Anchor) } = {
-    'anchor': param => new Zdog.Anchor(param),
-    'rect': param => new Zdog.Rect(param),
-    'round-rect': param => new Zdog.RoundedRect(param),
-    'ellipse': param => new Zdog.Ellipse(param),
-    'polygon': param => new Zdog.Polygon(param),
-    'sphere': param => new Zdog.Polygon(param),
-    'polyline': param => new Zdog.Shape(param),
+const zdogObjConstructors: { [key: string]: ((asset: DrawableAsset) => Zdog.Anchor) } = {
+    'anchor': asset => new Zdog.Anchor(asset),
+    'rect': asset => new Zdog.Rect(asset),
+    'round-rect': asset => new Zdog.RoundedRect(asset),
+    'ellipse': asset => new Zdog.Ellipse(asset),
+    'polygon': asset => new Zdog.Polygon(asset),
+    'sphere': asset => new Zdog.Polygon(asset),
+    'polyline': asset => new Zdog.Shape(asset),
 };
 
-function createZdogObj(param: ShapeParam): Zdog.Anchor {
-    let c = zdogObjConstructors[param.shape];
+function createZdogObj(asset: DrawableAsset): Zdog.Anchor {
+    let c = zdogObjConstructors[asset.shape];
     if (c) {
-        return c(param);
+        return c(asset);
     } else {
         console.log('cannot construct shape');
         debugger;

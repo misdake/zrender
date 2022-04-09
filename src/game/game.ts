@@ -3,6 +3,17 @@ import { SceneNode } from '../engine/scene/SceneNode';
 import { Renderer, RendererOptions } from '../engine/Renderer';
 import { SoundPlayer } from '../engine/util/SoundPlayer';
 
+
+const SoundAssets = {
+    fire: 'fire.wav',
+    move: 'move.wav',
+    powerup: 'powerup.wav',
+};
+SoundPlayer.load(SoundAssets, 'assets/sound/').then(() => {
+    console.log('sfx loaded');
+});
+
+
 let rendererOptions: RendererOptions = {
     maxTick: 0.1,
     canvasBackground: '#ccc',
@@ -37,6 +48,10 @@ scene.root.addChild(z = new SceneNode('z', {
         stroke: 5,
         color: '#636',
     },
+    sfx: {
+        channel: 0,
+        assets: [SoundAssets.fire],
+    },
 }).setScale(0.3, 0.3, 0.3));
 
 scene.root.addChild(new SceneNode('square', {
@@ -52,6 +67,7 @@ scene.root.addChild(new SceneNode('square', {
 
 renderer.scene = scene;
 
+let lastFire: number = -1;
 renderer.start((dt, input) => {
     let pressed = input.keyboard.pressed;
     // console.log(pressed);
@@ -62,20 +78,17 @@ renderer.start((dt, input) => {
     if (pressed['d']) z.position.x += dt * 10;
     if (pressed['w']) z.position.y -= dt * 10;
     if (pressed['s']) z.position.y += dt * 10;
+    if (pressed[' ']) {
+        let now = performance.now();
+        if (now - lastFire > 100) {
+            z.sfx.play(SoundAssets.fire);
+            lastFire = now;
+        }
+    }
 });
 
 renderer.preRender = (context, width, height) => {
     context.fillStyle = 'black';
     context.fillRect(0, 0, 20, 20);
 };
-
-let soundPlayer = new SoundPlayer();
-const SoundAssets = {
-    fire: 'fire.wav',
-    move: 'move.wav',
-    powerup: 'powerup.wav',
-};
-soundPlayer.init(SoundAssets, 'assets/sound/').then(() => {
-    (window as any).play1 = (volume: number) => soundPlayer.play(SoundAssets.fire, volume);
-});
 
