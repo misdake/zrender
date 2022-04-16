@@ -28,25 +28,29 @@ let scene = new Scene();
 let z: SceneNode;
 scene.root.addChild(new SceneNode('circle', {
     drawable: {
-        shape: 'ellipse',
-        diameter: 20,
-        stroke: 5,
-        color: 'rgba(0.5, 0.4, 0.8, 0.2)',
+        asset: {
+            shape: 'ellipse',
+            diameter: 20,
+            stroke: 5,
+            color: 'rgba(0.5, 0.4, 0.8, 0.2)',
+        },
     },
 }).setPosition(0, 0, 10));
 
 scene.root.addChild(z = new SceneNode('z', {
     drawable: {
-        shape: 'polyline',
-        path: [
-            {x: -32, y: -40, z: 0}, // start at top left
-            {x: 32, y: -40, z: 0}, // line to top right
-            {x: -32, y: 40, z: 0}, // line to bottom left
-            {x: 32, y: 40, z: 0}, // line to bottom right
-        ],
-        closed: false,
-        stroke: 5,
-        color: '#636',
+        asset: {
+            shape: 'polyline',
+            path: [
+                {x: -32, y: -40, z: 0}, // start at top left
+                {x: 32, y: -40, z: 0}, // line to top right
+                {x: -32, y: 40, z: 0}, // line to bottom left
+                {x: 32, y: 40, z: 0}, // line to bottom right
+            ],
+            closed: false,
+            stroke: 5,
+            color: '#636',
+        },
     },
     sfx: {
         channel: 0,
@@ -56,12 +60,14 @@ scene.root.addChild(z = new SceneNode('z', {
 
 scene.root.addChild(new SceneNode('square', {
     drawable: {
-        shape: 'rect',
-        width: 20,
-        height: 20,
-        stroke: 5,
-        color: '#E62',
-        fill: false,
+        asset: {
+            shape: 'rect',
+            width: 20,
+            height: 20,
+            stroke: 5,
+            color: '#E62',
+            fill: false,
+        },
     },
 }).setPosition(0, 0, -10));
 

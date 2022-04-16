@@ -25,12 +25,12 @@ export class SceneNode extends EventDispatcher {
         if (drawableParam) {
             this.drawable = new Drawable(this, drawableParam);
         } else {
-            this.drawable = new Drawable(this,{shape: 'anchor'});
+            this.drawable = new Drawable(this, {asset: {shape: 'anchor'}});
         }
 
         let sfxParam = components && components.sfx;
         if (sfxParam) {
-            this.sfx = new Sfx(this, sfxParam.assets, sfxParam.channel);
+            this.sfx = new Sfx(this, sfxParam);
         }
     }
 

@@ -1,15 +1,19 @@
 import { SoundAsset, SoundPlayer } from '../util/SoundPlayer';
 import { SceneNode } from '../scene/SceneNode';
 
-export type SfxAsset = SoundAsset[];
+export interface SfxParam {
+    assets: SoundAsset[],
+    channel: number,
+    enableEventTrigger?: boolean,
+}
 
 export class Sfx {
     private readonly _assets: Set<SoundAsset>;
     private channel: number;
 
-    constructor(node: SceneNode, sfxAsset: SfxAsset, channel: number) {
-        this.channel = channel;
-        this._assets = new Set(sfxAsset);
+    constructor(node: SceneNode, param: SfxParam) {
+        this.channel = param.channel;
+        this._assets = new Set(param.assets);
     }
 
     get assets() {

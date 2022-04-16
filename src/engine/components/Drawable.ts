@@ -4,13 +4,17 @@ import { SceneNode } from '../scene/SceneNode';
 
 export type DrawableAsset = ShapeParam
 
+export interface DrawableParam {
+    asset: DrawableAsset;
+}
+
 export class Drawable {
     public readonly asset: DrawableAsset;
     public readonly zdog: Zdog.Anchor;
 
-    constructor(node: SceneNode, asset: DrawableAsset) {
-        this.asset = asset;
-        this.zdog = createZdogObj(asset);
+    constructor(node: SceneNode, param: DrawableParam) {
+        this.asset = param.asset;
+        this.zdog = createZdogObj(param.asset);
     }
 
     update(position: Vec3, rotation: Vec3, scale: Vec3) {

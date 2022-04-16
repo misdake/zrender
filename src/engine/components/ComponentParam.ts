@@ -1,10 +1,7 @@
-import { DrawableAsset } from './Drawable';
-import { SfxAsset } from './Sfx';
+import { DrawableParam } from './Drawable';
+import { SfxParam } from './Sfx';
 
 export interface ComponentParam {
-    drawable?: DrawableAsset;
-    sfx?: {
-        assets: SfxAsset,
-        channel: number,
-    },
+    drawable?: DrawableParam;
+    sfx?: SfxParam,
 }
