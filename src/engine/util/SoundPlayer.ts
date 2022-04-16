@@ -12,7 +12,6 @@ export class SoundPlayer {
     static
     load(assets: SoundAssets, baseFolder: string): Promise<void[]> {
         return Promise.all(Object.values(assets).map(file => {
-            // console.log('loading sound', file);
             let promise = new Promise<void>(resolve => {
                 let request = new XMLHttpRequest();
                 request.open('GET', baseFolder + file, true);
@@ -20,7 +19,6 @@ export class SoundPlayer {
                 request.onload = () => {
                     this.loadContext.decodeAudioData(request.response).then(buffer => {
                         this.sounds.set(file, buffer);
-                        // console.log('loaded sound', file);
                         resolve();
                     }).catch(() => {
                         resolve(); //force resolve

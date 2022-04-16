@@ -2,8 +2,9 @@ import { Vec3 } from '../components/shape_types';
 import { Drawable } from '../components/Drawable';
 import { ComponentParam } from '../components/ComponentParam';
 import { Sfx } from '../components/Sfx';
+import { EventDispatcher } from '../util/EventDispatcher';
 
-export class SceneNode {
+export class SceneNode extends EventDispatcher {
     public readonly name: string;
     private readonly children: SceneNode[];
 
@@ -15,19 +16,21 @@ export class SceneNode {
     public readonly sfx: Sfx;
 
     constructor(name?: string, components?: ComponentParam) {
+        super();
+
         this.name = name || '';
         this.children = []; //TODO add parent control
 
         let drawableParam = components && components.drawable;
         if (drawableParam) {
-            this.drawable = new Drawable(drawableParam);
+            this.drawable = new Drawable(this, drawableParam);
         } else {
-            this.drawable = new Drawable({shape: 'anchor'});
+            this.drawable = new Drawable(this,{shape: 'anchor'});
         }
 
         let sfxParam = components && components.sfx;
         if (sfxParam) {
-            this.sfx = new Sfx(sfxParam.assets, sfxParam.channel);
+            this.sfx = new Sfx(this, sfxParam.assets, sfxParam.channel);
         }
     }
 

@@ -1,5 +1,6 @@
 import { ShapeParam, Vec3 } from './shape_types';
 import * as Zdog from 'zdog';
+import { SceneNode } from '../scene/SceneNode';
 
 export type DrawableAsset = ShapeParam
 
@@ -7,7 +8,7 @@ export class Drawable {
     public readonly asset: DrawableAsset;
     public readonly zdog: Zdog.Anchor;
 
-    constructor(asset: DrawableAsset) {
+    constructor(node: SceneNode, asset: DrawableAsset) {
         this.asset = asset;
         this.zdog = createZdogObj(asset);
     }
