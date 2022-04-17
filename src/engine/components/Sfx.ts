@@ -4,7 +4,6 @@ import { SceneNode } from '../scene/SceneNode';
 export interface SfxParam {
     assets: SoundAsset[],
     channel: number,
-    enableEventTrigger?: boolean,
 }
 
 export class Sfx {

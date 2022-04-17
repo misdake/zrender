@@ -9,16 +9,25 @@ export class SoundPlayer {
         return this.instances[channel];
     }
 
-    static
-    load(assets: SoundAssets, baseFolder: string): Promise<void[]> {
-        return Promise.all(Object.values(assets).map(file => {
+    static load(assets: SoundAssets, baseFolder: string): Promise<void[]> {
+        return Promise.all(Object.values(assets).map(asset => {
+
+            if (SoundPlayer.loadStarted.has(asset)) {
+                console.log("load skipped", asset);
+                return Promise.resolve();
+            }
+            SoundPlayer.loadStarted.add(asset);
+            console.log("load started", asset);
+
             let promise = new Promise<void>(resolve => {
                 let request = new XMLHttpRequest();
-                request.open('GET', baseFolder + file, true);
+                let filePath = baseFolder + asset;
+                request.open('GET', filePath, true);
                 request.responseType = 'arraybuffer';
                 request.onload = () => {
                     this.loadContext.decodeAudioData(request.response).then(buffer => {
-                        this.sounds.set(file, buffer);
+                        console.log("load finished", filePath);
+                        this.sounds.set(asset, buffer);
                         resolve();
                     }).catch(() => {
                         resolve(); //force resolve
@@ -36,6 +45,7 @@ export class SoundPlayer {
     private static loadContext = new AudioContext();
     private context = new AudioContext();
 
+    private static loadStarted = new Set<string>();
     private static sounds = new Map<string, AudioBuffer>();
 
     play(asset: string, volume: number, loop: boolean): AudioBufferSourceNode {
@@ -53,6 +63,8 @@ export class SoundPlayer {
             bufferSource.start();
             bufferSource.loop = loop;
             return bufferSource;
+        } else {
+            console.log('asset not found', asset);
         }
         return null;
     }

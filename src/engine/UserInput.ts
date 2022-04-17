@@ -29,6 +29,14 @@ export class UserInputController {
         // e.preventDefault();
     };
 
+    getAllPressedKeys(): Set<string> {
+        let r = new Set<string>();
+        for (let key in this.pressedKeys) {
+            r.add(key);
+        }
+        return r;
+    }
+
     attach() {
         window.addEventListener('keydown', this.keydown);
         window.addEventListener('keyup', this.keyup);

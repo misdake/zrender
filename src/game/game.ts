@@ -2,17 +2,39 @@ import { Scene } from '../engine/scene/Scene';
 import { SceneNode } from '../engine/scene/SceneNode';
 import { Renderer, RendererOptions } from '../engine/Renderer';
 import { SoundPlayer } from '../engine/util/SoundPlayer';
+import { Bgm, BgmParam } from '../engine/Bgm';
 
 
-const SoundAssets = {
+const SfxAssets = {
     fire: 'fire.wav',
     move: 'move.wav',
     powerup: 'powerup.wav',
 };
-SoundPlayer.load(SoundAssets, 'assets/sound/').then(() => {
+SoundPlayer.load(SfxAssets, 'assets/sound/').then(() => {
     console.log('sfx loaded');
 });
 
+// const BgmAssets = {
+//     bgm: 'bgm.ogg',
+// };
+// let bgmParam: BgmParam = {
+//     assets: BgmAssets,
+//     baseFolder: 'assets/bgm/',
+//     channel: 1,
+//     onLoaded: bgm => {
+//         bgm.play(BgmAssets.bgm, 0.5, true);
+//         setTimeout(() => {
+//             bgm.stop();
+//         }, 10000);
+//         setInterval(() => {
+//             console.log(bgm.currentAsset);
+//         }, 1000);
+//     },
+//     onEnd: (bgm, asset) => {
+//         console.log('bgm onEnd', asset);
+//     },
+// };
+// let bgm = new Bgm(bgmParam);
 
 let rendererOptions: RendererOptions = {
     maxTick: 0.1,
@@ -54,7 +76,7 @@ scene.root.addChild(z = new SceneNode('z', {
     },
     sfx: {
         channel: 0,
-        assets: [SoundAssets.fire],
+        assets: [SfxAssets.fire],
     },
 }).setScale(0.3, 0.3, 0.3));
 
@@ -87,7 +109,7 @@ renderer.start((dt, input) => {
     if (pressed[' ']) {
         let now = performance.now();
         if (now - lastFire > 100) {
-            z.sfx.play(SoundAssets.fire);
+            z.sfx.play(SfxAssets.fire);
             lastFire = now;
         }
     }
