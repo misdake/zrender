@@ -1,18 +1,13 @@
 import { Scene } from '../engine/scene/Scene';
 import { SceneNode } from '../engine/scene/SceneNode';
 import { Renderer, RendererOptions } from '../engine/Renderer';
-import { SoundPlayer } from '../engine/util/SoundPlayer';
 import { Bgm, BgmParam } from '../engine/Bgm';
-
 
 const SfxAssets = {
     fire: 'fire.wav',
     move: 'move.wav',
     powerup: 'powerup.wav',
 };
-SoundPlayer.load(SfxAssets, 'assets/sound/').then(() => {
-    console.log('sfx loaded');
-});
 
 // const BgmAssets = {
 //     bgm: 'bgm.ogg',
@@ -75,8 +70,9 @@ scene.root.addChild(z = new SceneNode('z', {
         },
     },
     sfx: {
+        assets: {fire: SfxAssets.fire},
         channel: 0,
-        assets: [SfxAssets.fire],
+        baseFolder: 'assets/sound/',
     },
 }).setScale(0.3, 0.3, 0.3));
 

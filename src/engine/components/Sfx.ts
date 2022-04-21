@@ -1,18 +1,28 @@
-import { SoundAsset, SoundPlayer } from '../util/SoundPlayer';
+import { SoundAsset, SoundAssets, SoundPlayer } from '../util/SoundPlayer';
 import { SceneNode } from '../scene/SceneNode';
 
 export interface SfxParam {
-    assets: SoundAsset[],
+    assets: SoundAssets,
+    baseFolder: string,
     channel: number,
+    onLoaded?: (sfx: Sfx) => void;
 }
 
 export class Sfx {
     private readonly _assets: Set<SoundAsset>;
     private channel: number;
 
+    public readonly loadPromise: Promise<void>;
+
     constructor(node: SceneNode, param: SfxParam) {
         this.channel = param.channel;
-        this._assets = new Set(param.assets);
+        this._assets = new Set(Object.values(param.assets));
+
+        this.loadPromise = SoundPlayer.load(param.assets, param.baseFolder).then(_ => {
+            if (param.onLoaded) {
+                param.onLoaded(this);
+            }
+        });
     }
 
     get assets() {

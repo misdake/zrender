@@ -11,7 +11,6 @@ export class SoundPlayer {
 
     static load(assets: SoundAssets, baseFolder: string): Promise<void[]> {
         return Promise.all(Object.values(assets).map(asset => {
-
             if (SoundPlayer.loadStarted.has(asset)) {
                 console.log("load skipped", asset);
                 return Promise.resolve();
