@@ -1,8 +1,8 @@
-import { Vec3 } from '../components/shape_types';
 import { Drawable } from '../components/Drawable';
 import { ComponentParam } from '../components/ComponentParam';
 import { Sfx } from '../components/Sfx';
 import { EventDispatcher } from '../util/EventDispatcher';
+import { Vec3 } from '../util/Vec3';
 
 export class SceneNode extends EventDispatcher {
     public readonly name: string;

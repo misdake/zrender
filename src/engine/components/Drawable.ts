@@ -1,7 +1,8 @@
-import { ShapeParam, Vec3 } from './shape_types';
+import { ShapeParam} from './shape_types';
 import * as Zdog from 'zdog';
 import { SceneNode } from '../scene/SceneNode';
 import { Component } from './Component';
+import { Vec3 } from '../util/Vec3';
 
 export type DrawableAsset = ShapeParam
 

@@ -9,6 +9,7 @@ export interface RendererOptions {
     canvasBackground?: string;
     maxTick?: number;
     aspectRatio?: number;
+    logicalHeight?: number;
     preRender?: CanvasRenderFunction;
     postRender?: CanvasRenderFunction;
 }
@@ -17,6 +18,7 @@ let defaultRendererOptions: RendererOptions = {
     canvasBackground: undefined,
     maxTick: Number.POSITIVE_INFINITY,
     aspectRatio: undefined,
+    logicalHeight: 100,
     preRender: undefined,
     postRender: undefined,
 };
@@ -152,7 +154,7 @@ export class Renderer {
             }
 
             this.zdog.setSize(targetWidth, targetHeight);
-            this.zdog.zoom = targetHeight / 100;
+            this.zdog.zoom = targetHeight / this.options.logicalHeight;
         }
 
         this.lastContainerWidth = cw;
