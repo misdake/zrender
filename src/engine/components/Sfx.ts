@@ -1,5 +1,6 @@
 import { SoundAsset, SoundAssets, SoundPlayer } from '../util/SoundPlayer';
 import { SceneNode } from '../scene/SceneNode';
+import { Component } from './Component';
 
 export interface SfxParam {
     assets: SoundAssets,
@@ -8,13 +9,14 @@ export interface SfxParam {
     onLoaded?: (sfx: Sfx) => void;
 }
 
-export class Sfx {
+export class Sfx extends Component {
     private readonly _assets: Set<SoundAsset>;
     private channel: number;
 
     public readonly loadPromise: Promise<void>;
 
     constructor(node: SceneNode, param: SfxParam) {
+        super(node);
         this.channel = param.channel;
         this._assets = new Set(Object.values(param.assets));
 
