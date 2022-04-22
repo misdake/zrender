@@ -17,11 +17,14 @@ export class Vec3 {
         this.set(x, y, z);
     }
 
-    public set(x: number, y: number, z: number) {
+    set(x: number, y: number, z: number) {
         this._x = x;
         this._y = y;
         this._z = z;
         this.dirty = true;
+    }
+    setVec3(other: Vec3) {
+        this.set(other._x, other._y, other._z);
     }
 
     get z(): number {
@@ -71,5 +74,24 @@ export class Vec3 {
     }
     multiplyScalar(n: number): Vec3 {
         return new Vec3(this._x * n, this._y * n, this._z * n);
+    }
+
+    rotateZSet(z: number) {
+        let sin = Math.sin(z);
+        let cos = Math.cos(z);
+        this.set(
+            this._x * cos + this._y * sin,
+            -this._x * sin + this._y * cos,
+            this.z,
+        );
+    }
+    rotateZ(z: number): Vec3 {
+        let sin = Math.sin(z);
+        let cos = Math.cos(z);
+        return new Vec3(
+            this._x * cos + this._y * sin,
+            -this._x * sin + this._y * cos,
+            this.z,
+        );
     }
 }
