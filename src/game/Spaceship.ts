@@ -2,17 +2,17 @@ import { DrawableAsset } from '../engine/components/Drawable';
 import { SceneNode } from '../engine/scene/SceneNode';
 import { Vec3 } from '../engine/util/Vec3';
 
-function generateShape(size: number, color: string): DrawableAsset {
+function generateShape(color: string): DrawableAsset {
     return {
         shape: 'polyline',
         path: [
-            {x: 0, y: -5, z: 0},
-            {x: -10, y: -10, z: 0},
-            {x: 0, y: 15, z: 0},
-            {x: 10, y: -10, z: 0},
+            {x: 0, y: -1, z: 0},
+            {x: -2, y: -2, z: 0},
+            {x: 0, y: 3, z: 0},
+            {x: 2, y: -2, z: 0},
         ],
         closed: true,
-        stroke: 2,
+        stroke: 0.5,
         color: color,
     };
 }
@@ -24,7 +24,7 @@ export class Spaceship {
     constructor(parent: SceneNode) {
         this.node = new SceneNode('spaceship', {
             drawable: {
-                asset: generateShape(10, '#e62'),
+                asset: generateShape('#e62'),
             },
             sfx: {
                 assets: {fire: 'fire.wav'},
@@ -47,10 +47,15 @@ export class Spaceship {
     private accF: number = (this.accS + 20);
     private accB: number = -(this.accS + 10);
     private speedMax: number = 30;
-    private rotAccS: number = 5;
-    private rotAccL: number = -(this.rotAccS + 10);
-    private rotAccR: number = (this.rotAccS + 10);
-    private rotSpeedMax: number = 3;
+    private rotAccS: number = 10;
+    private rotAccL: number = -(this.rotAccS + 20);
+    private rotAccR: number = (this.rotAccS + 20);
+    private rotSpeedMax: number = 4;
+
+    transform(local: Vec3): Vec3 {
+        local.rotateZSet(this.rot);
+        return local;
+    }
 
     playerMove(dt: number, forward: boolean, backward: boolean, left: boolean, right: boolean) {
         let acc = 0;
@@ -85,8 +90,6 @@ export class Spaceship {
         }
         speedLen = Math.min(speedLen, this.speedMax);
         this.speed.setLength(speedLen);
-
-        console.log(speedLen, this.rot);
 
         this.position.setVec3(this.position.add(this.speed.multiplyScalar(dt)));
 

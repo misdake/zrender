@@ -1,6 +1,8 @@
 import { Scene } from '../engine/scene/Scene';
 import { Renderer, RendererOptions } from '../engine/Renderer';
 import { Spaceship } from './Spaceship';
+import { Bullet } from './Bullet';
+import { Vec3 } from '../engine/util/Vec3';
 
 const SfxAssets = {
     fire: 'fire.wav',
@@ -32,7 +34,7 @@ const SfxAssets = {
 
 let rendererOptions: RendererOptions = {
     maxTick: 0.1,
-    canvasBackground: '#ccc',
+    canvasBackground: '#222',
     aspectRatio: 4 / 3,
 };
 let container = document.getElementById('container') as HTMLDivElement;
@@ -42,31 +44,8 @@ let renderer = new Renderer(container, rendererOptions);
 let scene = new Scene();
 scene.root.scale.y = -1;
 
-// scene.root.addChild(new SceneNode('circle', {
-//     drawable: {
-//         asset: {
-//             shape: 'ellipse',
-//             diameter: 20,
-//             stroke: 5,
-//             color: 'rgba(0.5, 0.4, 0.8, 0.2)',
-//         },
-//     },
-// }).setPosition(0, 0, 10));
-
 let spaceship = new Spaceship(scene.root);
-
-// scene.root.addChild(new SceneNode('square', {
-//     drawable: {
-//         asset: {
-//             shape: 'rect',
-//             width: 20,
-//             height: 20,
-//             stroke: 5,
-//             color: '#E62',
-//             fill: false,
-//         },
-//     },
-// }).setPosition(0, 0, -10));
+let bullet = new Bullet(scene.root);
 
 renderer.scene = scene;
 
@@ -83,14 +62,16 @@ renderer.start((dt, input) => {
         if (now - lastFire > 100) {
             spaceship.node.sfx.play(SfxAssets.fire);
             lastFire = now;
+            bullet.fire(spaceship, new Vec3(0, 3, 0), 0);
         }
     }
+    bullet.update(dt);
 });
 
 renderer.preRender = (context, _width, _height) => {
     context.textBaseline = 'top';
-    context.fillStyle = 'black';
+    context.fillStyle = 'white';
     context.font = '20px sans-serif';
-    context.fillText(`speed ${spaceship.speed.length().toFixed(2)}`, 10, 10);
+    context.fillText(`speed ${spaceship.speed.length().toFixed(0)}`, 10, 10);
 };
 
