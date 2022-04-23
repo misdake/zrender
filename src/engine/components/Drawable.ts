@@ -29,7 +29,6 @@ export class Drawable extends Component {
 
     set visible(v: boolean) {
         this._visible = v;
-        //TODO hide zdog object
     }
     get visible(): boolean {
         return this._visible;

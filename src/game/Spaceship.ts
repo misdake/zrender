@@ -1,6 +1,8 @@
 import { DrawableAsset } from '../engine/components/Drawable';
 import { SceneNode } from '../engine/scene/SceneNode';
 import { Vec3 } from '../engine/util/Vec3';
+import { Particle } from '../engine/components/ParticleSystem';
+import { rendererOptions } from './Config';
 
 function generateShape(color: string): DrawableAsset {
     return {
@@ -20,20 +22,42 @@ function generateShape(color: string): DrawableAsset {
 export class Spaceship {
 
     public readonly node: SceneNode;
+    public readonly shipNode: SceneNode;
+    public readonly bulletNode: SceneNode;
+
+    private static readonly SFX_ASSETS = {fire: 'fire.wav'};
 
     constructor(parent: SceneNode) {
-        this.node = new SceneNode('spaceship', {
+        this.node = new SceneNode('spaceship');
+        this.shipNode = new SceneNode('ship', {
             drawable: {
                 asset: generateShape('#e62'),
             },
             sfx: {
-                assets: {fire: 'fire.wav'},
+                assets: Spaceship.SFX_ASSETS,
                 channel: 0,
                 baseFolder: 'assets/sound/',
             },
         });
+        this.bulletNode = new SceneNode('bullet', {
+            particle: {
+                particleName: 'bullet',
+                drawable: {
+                    asset: {
+                        shape: 'rect',
+                        fill: true,
+                        width: 0,
+                        height: 1.5,
+                        stroke: 1,
+                        color: '#e62',
+                    },
+                },
+            },
+        });
 
         parent.addChild(this.node);
+        this.node.addChild(this.shipNode);
+        this.node.addChild(this.bulletNode);
     }
 
     public position: Vec3 = new Vec3();
@@ -93,8 +117,37 @@ export class Spaceship {
 
         this.position.setVec3(this.position.add(this.speed.multiplyScalar(dt)));
 
-        this.node.position.setVec3(this.position);
-        this.node.rotation.z = -this.rot;
+        this.shipNode.position.setVec3(this.position);
+        this.shipNode.rotation.z = -this.rot;
+    }
+
+    private lastFire: number = -1;
+    tryFire() {
+        let now = performance.now();
+        if (now - this.lastFire > 100) {
+            this.shipNode.sfx.play(Spaceship.SFX_ASSETS.fire);
+            this.lastFire = now;
+            this.fire();
+        }
+    }
+
+    private bulletSpeedDelta = 50;
+    private fire() {
+        this.bulletNode.particle.spawn(p => this.initParticle(p), p => Spaceship.checkParticleEnable(p));
+    }
+    private initParticle(p: Particle) {
+        p.basePosition.setVec3(this.position.add(this.transform(new Vec3(0, 3, 0))));
+        p.node.rotation.z = -this.rot;
+
+        p.speed.setVec3(this.transform(new Vec3(0, this.bulletSpeedDelta, 0)));
+        p.speed.setVec3(p.speed.add(this.speed));
+
+        p.time = 0;
+        p.timeMax = Number.POSITIVE_INFINITY;
+    }
+    private static checkParticleEnable(p: Particle): boolean {
+        return Math.abs(p.node.position.x) <= rendererOptions.logicalHeight / 2
+            && Math.abs(p.node.position.y) <= rendererOptions.logicalHeight / 2;
     }
 
 }

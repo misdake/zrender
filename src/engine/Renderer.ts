@@ -120,7 +120,7 @@ export class Renderer {
 
             if (this.preRender) this.preRender(this.ctx, this.width, this.height);
 
-            this.scene.root.update(true); //TODO better control
+            this.scene.root.updateComponents(dt, true); //TODO better control
             this.scene.root.drawable.zdog.updateGraph();
             this.zdog.updateRenderGraph(this.scene.root.drawable.zdog);
 

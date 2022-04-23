@@ -3,6 +3,7 @@ import { ComponentParam } from '../components/ComponentParam';
 import { Sfx } from '../components/Sfx';
 import { EventDispatcher } from '../util/EventDispatcher';
 import { Vec3 } from '../util/Vec3';
+import { ParticleSystem } from '../components/ParticleSystem';
 
 export class SceneNode extends EventDispatcher {
     public readonly name: string;
@@ -15,6 +16,7 @@ export class SceneNode extends EventDispatcher {
 
     public readonly drawable: Drawable;
     public readonly sfx: Sfx;
+    public readonly particle: ParticleSystem;
 
     constructor(name?: string, components?: ComponentParam) {
         super();
@@ -33,6 +35,11 @@ export class SceneNode extends EventDispatcher {
         if (sfxParam) {
             this.sfx = new Sfx(this, sfxParam);
         }
+
+        let particleParam = components && components.particle;
+        if (particleParam) {
+            this.particle = new ParticleSystem(this, particleParam);
+        }
     }
 
     addChild(child: SceneNode) {
@@ -46,7 +53,7 @@ export class SceneNode extends EventDispatcher {
         return this.parent;
     }
 
-    updateSelf(force: boolean = false): boolean {
+    updateDrawableSelf(force: boolean = false) {
         //check position/rotation/scale, update self
         let dirty1 = this.position.clearDirty();
         let dirty2 = this.rotation.clearDirty();
@@ -56,15 +63,18 @@ export class SceneNode extends EventDispatcher {
             this.drawable.updateTransform(this.position, this.rotation, this.scale);
         }
         this.drawable.updateVisibility();
-        return dirty;
     }
 
-    update(force: boolean = false): boolean {
-        let dirty = this.updateSelf(force);
-        for (let child of this.children) {
-            dirty = child.update(force) || dirty;
+    updateComponents(dt: number, force: boolean = false) {
+        this.updateDrawableSelf(force);
+
+        if (this.particle) {
+            this.particle.updateParticle(dt);
         }
-        return dirty;
+
+        for (let child of this.children) {
+            child.updateComponents(dt, force);
+        }
     }
 
     setPosition(x?: number, y?: number, z?: number): SceneNode {
