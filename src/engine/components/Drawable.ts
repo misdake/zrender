@@ -1,4 +1,4 @@
-import { ShapeParam} from './shape_types';
+import { ShapeParam } from './shape_types';
 import * as Zdog from 'zdog';
 import { SceneNode } from '../scene/SceneNode';
 import { Component } from './Component';
@@ -13,6 +13,7 @@ export interface DrawableParam {
 export class Drawable extends Component {
     public readonly asset: DrawableAsset;
     public readonly zdog: Zdog.Anchor;
+    private _visible: boolean = true;
 
     constructor(node: SceneNode, param: DrawableParam) {
         super(node);
@@ -24,6 +25,14 @@ export class Drawable extends Component {
         this.zdog.translate.set(position);
         this.zdog.rotate.set(rotation);
         this.zdog.scale.set(scale);
+    }
+
+    set visible(v: boolean) {
+        this._visible = v;
+        //TODO hide zdog object
+    }
+    get visible(): boolean {
+        return this._visible;
     }
 }
 

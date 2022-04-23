@@ -37,7 +37,9 @@ export class SceneNode extends EventDispatcher {
     addChild(child: SceneNode) {
         //TODO add parent control
         this.children.push(child);
-        this.drawable.zdog.addChild(child.drawable.zdog);
+        if (this.drawable) {
+            this.drawable.zdog.addChild(child.drawable.zdog);
+        }
     }
 
     updateSelf(force: boolean = false): boolean {
