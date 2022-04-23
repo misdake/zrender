@@ -21,7 +21,7 @@ export class Drawable extends Component {
         this.zdog = createZdogObj(param.asset);
     }
 
-    update(position: Vec3, rotation: Vec3, scale: Vec3) {
+    updateTransform(position: Vec3, rotation: Vec3, scale: Vec3) {
         this.zdog.translate.set(position);
         this.zdog.rotate.set(rotation);
         this.zdog.scale.set(scale);
@@ -33,6 +33,11 @@ export class Drawable extends Component {
     }
     get visible(): boolean {
         return this._visible;
+    }
+    updateVisibility() {
+        if (!this._visible) {
+            this.zdog.translate.set({x: -100000, y: -100000, z: -100000});
+        }
     }
 }
 

@@ -34,6 +34,8 @@ export class Bullet {
             },
         });
 
+        this.node.drawable.visible = false;
+
         parent.addChild(this.node);
     }
 
@@ -51,6 +53,8 @@ export class Bullet {
         this.speed.setVec3(this.speed.add(spaceship.speed));
         console.log(this.speed);
         this.time = 0;
+
+        this.node.drawable.visible = true;
     }
 
     update(dt: number) {

@@ -6,6 +6,7 @@ import { Vec3 } from '../util/Vec3';
 
 export class SceneNode extends EventDispatcher {
     public readonly name: string;
+    private parent: SceneNode;
     private readonly children: SceneNode[];
 
     public readonly position: Vec3 = new Vec3(0, 0, 0);
@@ -36,10 +37,13 @@ export class SceneNode extends EventDispatcher {
 
     addChild(child: SceneNode) {
         //TODO add parent control
+        child.parent = this;
         this.children.push(child);
-        if (this.drawable) {
-            this.drawable.zdog.addChild(child.drawable.zdog);
-        }
+        this.drawable.zdog.addChild(child.drawable.zdog);
+    }
+
+    getParent(): SceneNode {
+        return this.parent;
     }
 
     updateSelf(force: boolean = false): boolean {
@@ -49,8 +53,9 @@ export class SceneNode extends EventDispatcher {
         let dirty3 = this.scale.clearDirty();
         let dirty = dirty1 || dirty2 || dirty3;
         if (force || dirty) {
-            this.drawable.update(this.position, this.rotation, this.scale);
+            this.drawable.updateTransform(this.position, this.rotation, this.scale);
         }
+        this.drawable.updateVisibility();
         return dirty;
     }
 
