@@ -3,6 +3,7 @@ import * as Zdog from 'zdog';
 import { SceneNode } from '../scene/SceneNode';
 import { Component } from './Component';
 import { Vec3 } from '../util/Vec3';
+import { zdogReplaceChild } from '../util/zdogHack';
 
 export type DrawableAsset = ShapeParam
 
@@ -13,7 +14,9 @@ export interface DrawableParam {
 export class Drawable extends Component {
     public readonly asset: DrawableAsset;
     public readonly zdog: Zdog.Anchor;
+
     private _visible: boolean = true;
+    private placeholder: Zdog.Anchor;
 
     constructor(node: SceneNode, param: DrawableParam) {
         super(node);
@@ -28,15 +31,23 @@ export class Drawable extends Component {
     }
 
     set visible(v: boolean) {
+        if (this._visible === v) return;
+
+        if (!v) { //hide
+            let parent = this.node.getParent();
+            this.placeholder = new Zdog.Anchor();
+            zdogReplaceChild(parent.drawable.zdog, this.zdog, this.placeholder);
+
+        } else { //show
+            let parent = this.node.getParent();
+            zdogReplaceChild(parent.drawable.zdog, this.placeholder, this.zdog);
+            this.placeholder = undefined;
+        }
+
         this._visible = v;
     }
     get visible(): boolean {
         return this._visible;
-    }
-    updateVisibility() {
-        if (!this._visible) {
-            this.zdog.translate.set({x: -100000, y: -100000, z: -100000});
-        }
     }
 }
 
@@ -55,7 +66,7 @@ function createZdogObj(asset: DrawableAsset): Zdog.Anchor {
     if (c) {
         return c(asset);
     } else {
-        console.log('cannot construct shape');
+        console.error('cannot construct shape', asset);
         debugger;
         return null;
     }

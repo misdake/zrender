@@ -62,7 +62,6 @@ export class SceneNode extends EventDispatcher {
         if (force || dirty) {
             this.drawable.updateTransform(this.position, this.rotation, this.scale);
         }
-        this.drawable.updateVisibility();
     }
 
     updateComponents(dt: number, force: boolean = false) {
