@@ -2,7 +2,7 @@ import { DrawableAsset } from '../engine/components/Drawable';
 import { SceneNode } from '../engine/scene/SceneNode';
 import { Vec3 } from '../engine/util/Vec3';
 import { Particle } from '../engine/components/ParticleSystem';
-import { rendererOptions } from './Config';
+import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
 
 function generateShape(color: string): DrawableAsset {
     return {
@@ -117,23 +117,44 @@ export class Spaceship {
 
         this.position.setVec3(this.position.add(this.speed.multiplyScalar(dt)));
 
+        //fit in screen
+        let position = this.position, margin = -2;
+        if (position.x < RENDER_LEFT - margin) {
+            position.x = RENDER_LEFT - margin;
+            this.speed.x = 0;
+        }
+        if (position.x > RENDER_RIGHT + margin) {
+            position.x = RENDER_RIGHT + margin;
+            this.speed.x = 0;
+        }
+        if (position.y < RENDER_TOP - margin) {
+            position.y = RENDER_TOP - margin;
+            this.speed.y = 0;
+        }
+        if (position.y > RENDER_BOTTOM + margin) {
+            position.y = RENDER_BOTTOM + margin;
+            this.speed.y = 0;
+        }
+
+        //apply scene
         this.shipNode.position.setVec3(this.position);
         this.shipNode.rotation.z = -this.rot;
     }
 
-    private lastFire: number = -1;
-    tryFire() {
-        let now = performance.now();
-        if (now - this.lastFire > 100) {
+    private fireIntervalMin = 0.1;
+    private sinceLastFire: number = 0;
+    tryFire(dt: number) {
+        this.sinceLastFire += dt;
+        if (this.sinceLastFire >= this.fireIntervalMin) {
             this.shipNode.sfx.play(Spaceship.SFX_ASSETS.fire);
-            this.lastFire = now;
+            this.sinceLastFire = 0;
             this.fire();
         }
     }
 
     private bulletSpeedDelta = 50;
     private fire() {
-        this.bulletNode.particle.spawn(p => this.initParticle(p), p => Spaceship.checkParticleEnable(p));
+        this.bulletNode.particle.spawn(p => this.initParticle(p), p => isInScreen(p.node.position, 2));
     }
     private initParticle(p: Particle) {
         p.basePosition.setVec3(this.position.add(this.transform(new Vec3(0, 3, 0))));
@@ -144,10 +165,6 @@ export class Spaceship {
 
         p.time = 0;
         p.timeMax = Number.POSITIVE_INFINITY;
-    }
-    private static checkParticleEnable(p: Particle): boolean {
-        return Math.abs(p.node.position.x) <= rendererOptions.logicalHeight / 2
-            && Math.abs(p.node.position.y) <= rendererOptions.logicalHeight / 2;
     }
 
 }

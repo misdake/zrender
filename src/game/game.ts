@@ -50,7 +50,7 @@ async function start() {
         spaceship.playerMove(dt, pressed['w'], pressed['s'], pressed['a'], pressed['d']);
 
         if (pressed[' ']) {
-            spaceship.tryFire();
+            spaceship.tryFire(dt);
         }
     });
 
