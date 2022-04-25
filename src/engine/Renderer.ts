@@ -37,7 +37,7 @@ export class Renderer {
 
     private zdog: Zdog.Illustration;
 
-    //from option and configurable
+    //from option and also configurable
     public preRender: CanvasRenderFunction;
     public postRender: CanvasRenderFunction;
 
@@ -114,15 +114,23 @@ export class Renderer {
         this.lastTickTime = tickTime;
 
         if (this.scene) {
+            //update scene
+            this.scene.root.beforeTick(dt);
             if (this.tick) {
                 this.tick(dt, this.inputController.tick());
             }
+            this.scene.root.afterTick(dt);
 
-            if (this.preRender) this.preRender(this.ctx, this.width, this.height);
+            if (this.preRender) {
+                this.ctx.save();
+                this.ctx.resetTransform();
+                this.preRender(this.ctx, this.width, this.height);
+                this.ctx.restore();
+            }
 
-            this.scene.root.updateComponents(dt, true); //TODO better control
+            //render scene
             this.scene.root.drawable.zdog.updateGraph();
-            this.zdog.updateRenderGraph(this.scene.root.drawable.zdog);
+            this.zdog.renderGraph(this.scene.root.drawable.zdog);
 
             if (this.postRender) {
                 this.ctx.save();

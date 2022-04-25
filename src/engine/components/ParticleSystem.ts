@@ -17,7 +17,7 @@ export class Particle {
     time: number;
     timeMax: number;
 
-    checkEnable: (p: Particle) => boolean;
+    private checkEnable: (p: Particle) => boolean;
 
     constructor(name: string, drawable: DrawableParam) {
         this.node = new SceneNode('particle', {
@@ -25,7 +25,7 @@ export class Particle {
         });
     }
 
-    spawn(init: (p: Particle) => void, checkEnable: (p: Particle) => boolean) {
+    spawn(init: (p: Particle) => void, checkEnable: (p: Particle) => boolean) { //TODO per particle system?
         this.basePosition.set(0, 0, 0);
         this.speed.set(0, 0, 0);
         this.time = 0;
@@ -33,16 +33,19 @@ export class Particle {
 
         init(this);
         this.checkEnable = checkEnable;
+        this.updateParticle(0);
     }
 
-    updateParticle(dt: number): boolean {
+    updateParticle(dt: number) {
         this.time += dt;
-        if (this.time > this.timeMax) {
-            return false;
-        }
+        if (this.time > this.timeMax) return;
 
         this.node.position.setVec3(this.basePosition.add(this.speed.multiplyScalar(this.time)));
         // console.log('update particle', this.node.position);
+    }
+
+    checkParticle(): boolean {
+        if (this.time > this.timeMax) return false;
 
         let enabled = this.checkEnable(this);
         return enabled;
@@ -87,9 +90,14 @@ export class ParticleSystem extends Component {
         particle.spawn(init, checkEnable);
     }
 
-    updateParticle(dt: number) {
+    updateParticles(dt: number) {
+        this.enabled.forEach(particle => {
+            particle.updateParticle(dt);
+        });
+    }
+    checkParticles() {
         this.enabled = this.enabled.filter(particle => {
-            let enabled = particle.updateParticle(dt);
+            let enabled = particle.checkParticle();
             if (!enabled) {
                 this.disabled.push(particle);
             }

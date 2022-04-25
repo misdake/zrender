@@ -64,15 +64,24 @@ export class SceneNode extends EventDispatcher {
         }
     }
 
-    updateComponents(dt: number, force: boolean = false) {
-        this.updateDrawableSelf(force);
+    beforeTick(dt: number) {
+        if (this.particle) {
+            this.particle.updateParticles(dt);
+        }
+        for (let child of this.children) {
+            child.beforeTick(dt);
+        }
+    }
+
+    afterTick(dt: number) {
+        this.updateDrawableSelf();
 
         if (this.particle) {
-            this.particle.updateParticle(dt);
+            this.particle.checkParticles();
         }
 
         for (let child of this.children) {
-            child.updateComponents(dt, force);
+            child.afterTick(dt);
         }
     }
 
