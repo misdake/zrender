@@ -1,7 +1,7 @@
 import { Scene } from '../engine/scene/Scene';
 import { Renderer } from '../engine/Renderer';
-import { Spaceship } from './Spaceship';
 import { rendererOptions } from './Config';
+import { GameLogic, GameStateGlobal, Level } from './GameLogic';
 
 // const SfxAssets = {
 //     fire: 'fire.wav',
@@ -33,32 +33,26 @@ import { rendererOptions } from './Config';
 
 async function start() {
     let container = document.getElementById('container') as HTMLDivElement;
-
     let renderer = new Renderer(container, rendererOptions);
-
     let scene = new Scene();
+    renderer.scene = scene;
     scene.root.scale.y = -1;
 
-    let spaceship = new Spaceship(scene.root);
+    let gameState = new GameStateGlobal(scene);
+    let gameLogic = new GameLogic(gameState);
 
-    renderer.scene = scene;
+    let level = new Level(gameState);
+    gameLogic.loadLevel(level);
 
     renderer.start((dt, input) => {
-        let pressed = input.keyboard.pressed;
-
-        //TODO extract key name constants
-        spaceship.playerMove(dt, pressed['w'], pressed['s'], pressed['a'], pressed['d']);
-
-        if (pressed[' ']) {
-            spaceship.tryFire(dt);
-        }
+        gameLogic.update(dt, input);
     });
 
     renderer.preRender = (context, _width, _height) => {
         context.textBaseline = 'top';
         context.fillStyle = 'white';
         context.font = '20px sans-serif';
-        context.fillText(`speed ${spaceship.speed.length().toFixed(0)}`, 10, 10);
+        context.fillText(`speed ${level.state.player.speed.length().toFixed(0)}`, 10, 10);
     };
 }
 

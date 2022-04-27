@@ -4,6 +4,24 @@ import { Vec3 } from '../engine/util/Vec3';
 import { Particle } from '../engine/components/ParticleSystem';
 import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
 
+interface SpaceshipType {
+    color: string,
+}
+
+export enum SpaceshipOwner {
+    player = 'player',
+    enemy = 'enemy',
+}
+
+const SPACESHIP_TYPES: { [key: string]: SpaceshipType } = {
+    player: {
+        color: '#e63',
+    },
+    enemy: {
+        color: '#2e3',
+    },
+};
+
 function generateShape(color: string): DrawableAsset {
     return {
         shape: 'polyline',
@@ -27,11 +45,13 @@ export class Spaceship {
 
     private static readonly SFX_ASSETS = {fire: 'fire.wav'};
 
-    constructor(parent: SceneNode) {
+    constructor(parent: SceneNode, spaceshipOwner: SpaceshipOwner) {
+        let spaceshipType = SPACESHIP_TYPES[spaceshipOwner];
+
         this.node = new SceneNode('spaceship');
         this.shipNode = new SceneNode('ship', {
             drawable: {
-                asset: generateShape('#e62'),
+                asset: generateShape(spaceshipType.color),
             },
             sfx: {
                 assets: Spaceship.SFX_ASSETS,
@@ -49,7 +69,7 @@ export class Spaceship {
                         width: 0,
                         height: 1.5,
                         stroke: 1,
-                        color: '#e62',
+                        color: spaceshipType.color,
                     },
                 },
             },
