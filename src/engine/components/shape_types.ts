@@ -6,7 +6,7 @@ interface Vec3I {
 
 export type AnchorParam = { addTo?: undefined, shape: 'anchor' }
 
-export type ShapeCommonParam = { addTo?: undefined, color: string, stroke: number }
+export type ShapeCommonParam = { addTo?: undefined, color: string, stroke: number | false }
 
 export type RectParam = ShapeCommonParam & { shape: 'rect', width: number, height: number, fill: boolean }
 
@@ -20,8 +20,14 @@ export type SphereParam = ShapeCommonParam & { shape: 'sphere' };
 
 export type PolylineParam = ShapeCommonParam & { shape: 'polyline', path: Vec3I[], closed: boolean }
 
+export type Hemisphere = ShapeCommonParam & { shape: 'hemisphere', diameter: number, backface?: string };
+
+export type Cone = ShapeCommonParam & { shape: 'cone', diameter: number, length: number, backface?: string };
+
 //type PathParam TODO
 
 //TODO more types
 
-export type ShapeParam = AnchorParam | RectParam | RoundRectParam | EllipseParam | PolygonParam | SphereParam | PolylineParam;
+export type ShapeParam = AnchorParam |
+    RectParam | RoundRectParam | EllipseParam | PolygonParam | SphereParam | PolylineParam |
+    Hemisphere | Cone;

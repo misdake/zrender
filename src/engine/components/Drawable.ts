@@ -59,6 +59,8 @@ const zdogObjConstructors: { [key: string]: ((asset: DrawableAsset) => Zdog.Anch
     'polygon': asset => new Zdog.Polygon(asset),
     'sphere': asset => new Zdog.Polygon(asset),
     'polyline': asset => new Zdog.Shape(asset),
+    'hemisphere': asset => new Zdog.Hemisphere(asset),
+    'cone': asset => new Zdog.Cone(asset),
 };
 
 function createZdogObj(asset: DrawableAsset): Zdog.Anchor {

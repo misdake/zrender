@@ -54,6 +54,7 @@ export function animate(node: SceneNode, animations: Animation[], srcs: Vec3[], 
     let updated = false;
     for (let i = 0; i < animations.length; i++) {
         let animation = animations[i];
+        if (time > animation.duration) continue;
         let src: Vec3 = srcs[i];
         functions[animation.type](node[animation.field], src, time, animation);
         updated = true;

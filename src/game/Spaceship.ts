@@ -43,6 +43,7 @@ export class Spaceship {
     public readonly node: SceneNode;
     public readonly shipNode: SceneNode;
     public readonly bulletNode: SceneNode;
+    public readonly bubbleNode: SceneNode;
 
     private static readonly SFX_ASSETS = {fire: 'fire.wav'};
 
@@ -60,6 +61,7 @@ export class Spaceship {
                 baseFolder: 'assets/sound/',
             },
         });
+
         this.bulletNode = new SceneNode('bullet', {
             particle: {
                 particleName: 'bullet',
@@ -78,18 +80,53 @@ export class Spaceship {
                     type: 'add',
                     field: 'position',
                     duration: 10000,
-                    speed: null, //filled
+                    speed: null, //filled in initBullet
                 }],
             },
         });
         this.bulletNode.particle.setCallbacks(
-            (p, animations) => this.initParticle(p, animations),
+            (p, animations) => this.initBullet(p, animations),
             p => isInScreen(p.node.position, 2),
         );
+
+        this.bubbleNode = new SceneNode('bullet', {
+            particle: {
+                particleName: 'bullet',
+                drawable: {
+                    asset: {
+                        shape: 'cone',
+                        diameter: 1,
+                        length: 0,
+                        stroke: false,
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        backface: 'rgba(255, 255, 255, 0)',
+                    },
+                },
+                animations: [{
+                    name: 'scale',
+                    type: 'lerp',
+                    field: 'scale',
+                    duration: 0.5,
+                    target: new Vec3(0, 0, 0),
+                }, {
+                    name: 'move',
+                    type: 'add',
+                    field: 'position',
+                    duration: 0.5,
+                    speed: null,
+                }],
+            },
+        });
+        this.bubbleNode.particle.setCallbacks(
+            (p, animations) => this.initBubble(p, animations),
+            _ => true,
+        );
+        this.bubbleNode.position.z = -1;
 
         parent.addChild(this.node);
         this.node.addChild(this.shipNode);
         this.node.addChild(this.bulletNode);
+        this.node.addChild(this.bubbleNode);
     }
 
     public position: Vec3 = new Vec3();
@@ -171,6 +208,10 @@ export class Spaceship {
         //apply scene
         this.shipNode.position.setVec3(this.position);
         this.shipNode.rotation.z = -this.rot;
+
+        if (forward) {
+            this.tryEmit(dt);
+        }
     }
 
     private fireIntervalMin = 0.1;
@@ -188,13 +229,39 @@ export class Spaceship {
     private fire() {
         this.bulletNode.particle.spawn();
     }
-    private initParticle(p: Particle, animations: Animation[]) {
+    private initBullet(p: Particle, animations: Animation[]) {
         let moveAnimation = animations[0] as AnimateAdd;
         p.node.position.setVec3(this.position.add(this.transform(new Vec3(0, 3, 0))));
         p.node.rotation.z = -this.rot;
 
         let speed = moveAnimation.speed = new Vec3();
         speed.setVec3(this.transform(new Vec3(0, this.bulletSpeedDelta, 0)));
+        speed.setVec3(speed.add(this.speed));
+    }
+
+    private emitIntervalMin = 0.03;
+    private sinceLastEmit: number = 0;
+    tryEmit(dt: number) {
+        this.sinceLastEmit += dt;
+        while (this.sinceLastEmit >= this.emitIntervalMin) {
+            this.sinceLastEmit = 0;
+            this.emitBubble();
+        }
+    }
+    private emitBubble() {
+        this.bubbleNode.particle.spawn();
+    }
+    private bubbleSpeedDelta = -35;
+    private initBubble(p: Particle, animations: Animation[]) {
+        let size = 1 + Math.random();
+        let offsetX = Math.random() * 2 - 1;
+        let offsetY = (Math.random() * 2 - 1) * 0.2;
+        p.node.position.setVec3(this.position.add(this.transform(new Vec3(offsetX, -2 + offsetY, 0))));
+        p.node.scale.set(size, size, size);
+
+        let moveAnimation = animations[1] as AnimateAdd;
+        let speed = moveAnimation.speed = new Vec3();
+        speed.setVec3(this.transform(new Vec3(0, this.bubbleSpeedDelta, 0)));
         speed.setVec3(speed.add(this.speed));
     }
 
