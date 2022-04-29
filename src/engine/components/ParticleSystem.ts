@@ -2,22 +2,23 @@ import { Component } from './Component';
 import { DrawableParam } from './Drawable';
 import { Vec3 } from '../util/Vec3';
 import { SceneNode } from '../scene/SceneNode';
+import { animate, Animation } from './Animation';
 
 export interface ParticleParam {
     particleName: string,
     drawable: DrawableParam;
     spawnParent?: SceneNode;
+    animations: Animation[];
 }
 
 export class Particle {
     readonly node: SceneNode;
 
-    basePosition: Vec3 = new Vec3();
-    speed: Vec3 = new Vec3();
+    animationSrc: Vec3[];
+    animations: Animation[];
     time: number;
-    timeMax: number;
 
-    private checkEnable: (p: Particle) => boolean;
+    updatedThisFrame = false;
 
     constructor(name: string, drawable: DrawableParam) {
         this.node = new SceneNode('particle', {
@@ -25,32 +26,28 @@ export class Particle {
         });
     }
 
-    spawn(init: (p: Particle) => void, checkEnable: (p: Particle) => boolean) { //TODO per particle system?
-        this.basePosition.set(0, 0, 0);
-        this.speed.set(0, 0, 0);
+    spawn(initFunc: (p: Particle, animations: Animation[]) => void, animations: Animation[]) {
         this.time = 0;
-        this.timeMax = Number.POSITIVE_INFINITY;
+        this.animations = animations;
+        initFunc(this, animations);
 
-        init(this);
-        this.checkEnable = checkEnable;
-        this.updateParticle(0);
+        this.animationSrc = [];
+        for (let animation of this.animations) {
+            let src: Vec3 = this.node[animation.field];
+            this.animationSrc.push(new Vec3(src.x, src.y, src.z));
+        }
     }
 
-    updateParticle(dt: number) {
+    update(dt: number) {
         this.time += dt;
-        if (this.time > this.timeMax) return;
-
-        this.node.position.setVec3(this.basePosition.add(this.speed.multiplyScalar(this.time)));
-        // console.log('update particle', this.node.position);
+        this.updatedThisFrame = animate(this.node, this.animations, this.animationSrc, this.time);
     }
 
-    checkParticle(): boolean {
-        if (this.time > this.timeMax) return false;
-
-        let enabled = this.checkEnable(this);
+    check(checkEnable: (p: Particle) => boolean): boolean {
+        if (!this.updatedThisFrame) return false;
+        let enabled = checkEnable(this);
         return enabled;
     }
-
 }
 
 export class ParticleSystem extends Component {
@@ -61,12 +58,14 @@ export class ParticleSystem extends Component {
     public readonly particleName: string;
     public readonly drawable: DrawableParam;
     public readonly spawnParent: SceneNode;
+    public readonly animations: Animation[];
 
     constructor(node: SceneNode, param: ParticleParam) {
         super(node);
 
         this.particleName = param.particleName;
         this.drawable = param.drawable;
+        this.animations = param.animations;
 
         if (param.spawnParent) {
             this.spawnParent = param.spawnParent;
@@ -75,8 +74,7 @@ export class ParticleSystem extends Component {
             node.addChild(this.spawnParent);
         }
     }
-
-    spawn(init: (p: Particle) => void, checkEnable: (p: Particle) => boolean) {
+    spawn() {
         let particle: Particle;
         if (this.disabled.length) {
             particle = this.disabled[this.disabled.length - 1];
@@ -87,17 +85,20 @@ export class ParticleSystem extends Component {
         }
         this.enabled.push(particle);
 
-        particle.spawn(init, checkEnable);
+        let particleAnimations = this.animations.map(a => Object.assign({}, a));
+        particle.spawn(this.initFunc, particleAnimations);
+        particle.update(0);
     }
 
     updateParticles(dt: number) {
         this.enabled.forEach(particle => {
-            particle.updateParticle(dt);
+            particle.updatedThisFrame = false;
+            particle.update(dt);
         });
     }
     checkParticles() {
         this.enabled = this.enabled.filter(particle => {
-            let enabled = particle.checkParticle();
+            let enabled = particle.check(this.checkFunc);
             if (!enabled) {
                 this.disabled.push(particle);
             }
@@ -111,4 +112,10 @@ export class ParticleSystem extends Component {
         this.enabled.length = 0;
     }
 
+    private initFunc: (p: Particle, animations: Animation[]) => void;
+    private checkFunc: (p: Particle) => boolean;
+    setCallbacks(init: (p: Particle, animations: Animation[]) => void, check: (p: Particle) => boolean) {
+        this.initFunc = init;
+        this.checkFunc = check;
+    }
 }

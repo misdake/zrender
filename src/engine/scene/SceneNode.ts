@@ -15,8 +15,8 @@ export class SceneNode extends EventDispatcher {
     public readonly scale: Vec3 = new Vec3(1, 1, 1);
 
     public readonly drawable: Drawable;
-    public readonly sfx: Sfx;
-    public readonly particle: ParticleSystem;
+    public readonly sfx?: Sfx;
+    public readonly particle?: ParticleSystem;
 
     constructor(name?: string, components?: ComponentParam) {
         super();

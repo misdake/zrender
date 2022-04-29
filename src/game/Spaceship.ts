@@ -1,4 +1,5 @@
 import { DrawableAsset } from '../engine/components/Drawable';
+import { AnimateAdd, Animation } from '../engine/components/Animation';
 import { SceneNode } from '../engine/scene/SceneNode';
 import { Vec3 } from '../engine/util/Vec3';
 import { Particle } from '../engine/components/ParticleSystem';
@@ -72,8 +73,19 @@ export class Spaceship {
                         color: spaceshipType.color,
                     },
                 },
+                animations: [{
+                    name: 'fire',
+                    type: 'add',
+                    field: 'position',
+                    duration: 10000,
+                    speed: null, //filled
+                }],
             },
         });
+        this.bulletNode.particle.setCallbacks(
+            (p, animations) => this.initParticle(p, animations),
+            p => isInScreen(p.node.position, 2),
+        );
 
         parent.addChild(this.node);
         this.node.addChild(this.shipNode);
@@ -174,17 +186,16 @@ export class Spaceship {
 
     private bulletSpeedDelta = 50;
     private fire() {
-        this.bulletNode.particle.spawn(p => this.initParticle(p), p => isInScreen(p.node.position, 2));
+        this.bulletNode.particle.spawn();
     }
-    private initParticle(p: Particle) {
-        p.basePosition.setVec3(this.position.add(this.transform(new Vec3(0, 3, 0))));
+    private initParticle(p: Particle, animations: Animation[]) {
+        let moveAnimation = animations[0] as AnimateAdd;
+        p.node.position.setVec3(this.position.add(this.transform(new Vec3(0, 3, 0))));
         p.node.rotation.z = -this.rot;
 
-        p.speed.setVec3(this.transform(new Vec3(0, this.bulletSpeedDelta, 0)));
-        p.speed.setVec3(p.speed.add(this.speed));
-
-        p.time = 0;
-        p.timeMax = Number.POSITIVE_INFINITY;
+        let speed = moveAnimation.speed = new Vec3();
+        speed.setVec3(this.transform(new Vec3(0, this.bulletSpeedDelta, 0)));
+        speed.setVec3(speed.add(this.speed));
     }
 
 }
