@@ -95,11 +95,11 @@ export class Spaceship {
                 drawable: {
                     asset: {
                         shape: 'cone',
-                        diameter: 1,
-                        length: 0,
+                        diameter: 0.8,
+                        length: 1.0,
                         stroke: false,
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        backface: 'rgba(255, 255, 255, 0)',
+                        color: 'rgba(255, 0, 0, 0.6)',
+                        backface: 'rgba(255, 0, 0, 0)',
                     },
                 },
                 animations: [{
@@ -146,8 +146,7 @@ export class Spaceship {
     private rotSpeedMax: number = 4;
 
     transform(local: Vec3): Vec3 {
-        local.rotateZSet(this.rot);
-        return local;
+        return local.rotateZ(this.rot);
     }
 
     playerMove(dt: number, forward: boolean, backward: boolean, left: boolean, right: boolean) {
@@ -225,7 +224,8 @@ export class Spaceship {
         }
     }
 
-    private bulletSpeedDelta = 50;
+    private bulletRecoilSpeedDelta = new Vec3(0, -1, 0);
+    private bulletFireSpeedDelta = new Vec3(0, 50, 0);
     private fire() {
         this.bulletNode.particle.spawn();
     }
@@ -234,8 +234,10 @@ export class Spaceship {
         p.node.position.setVec3(this.position.add(this.transform(new Vec3(0, 3, 0))));
         p.node.rotation.z = -this.rot;
 
+        this.speed.setVec3(this.speed.add(this.transform(this.bulletRecoilSpeedDelta)));
+
         let speed = moveAnimation.speed = new Vec3();
-        speed.setVec3(this.transform(new Vec3(0, this.bulletSpeedDelta, 0)));
+        speed.setVec3(this.transform(this.bulletFireSpeedDelta));
         speed.setVec3(speed.add(this.speed));
     }
 
@@ -251,17 +253,18 @@ export class Spaceship {
     private emitBubble() {
         this.bubbleNode.particle.spawn();
     }
-    private bubbleSpeedDelta = -35;
+    private bubbleSpeedDelta = new Vec3(0, -35, 0);
     private initBubble(p: Particle, animations: Animation[]) {
         let size = 1 + Math.random();
-        let offsetX = Math.random() * 2 - 1;
+        let offsetX = Math.random() + Math.random() - 1;
         let offsetY = (Math.random() * 2 - 1) * 0.2;
-        p.node.position.setVec3(this.position.add(this.transform(new Vec3(offsetX, -2 + offsetY, 0))));
+        p.node.position.setVec3(this.position.add(this.transform(new Vec3(offsetX, -1.5 + offsetY, 0))));
         p.node.scale.set(size, size, size);
+        p.node.rotation.set(Math.PI / 2, this.rot, 0);
 
         let moveAnimation = animations[1] as AnimateAdd;
         let speed = moveAnimation.speed = new Vec3();
-        speed.setVec3(this.transform(new Vec3(0, this.bubbleSpeedDelta, 0)));
+        speed.setVec3(this.transform(this.bubbleSpeedDelta));
         speed.setVec3(speed.add(this.speed));
     }
 
