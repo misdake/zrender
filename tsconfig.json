@@ -11,6 +11,8 @@
     "outDir": "./js/",
     "moduleResolution": "node",
     "types": [
+      "mocha",
+      "chai"
     ]
   },
   "exclude": [

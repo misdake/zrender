@@ -26,9 +26,9 @@ module.exports = env => {
         },
         externals: {},
         devServer: {
-            publicPath: "/",
-            contentBase: path.join(__dirname, 'dist'),
-            open: true,
+            static: {
+                directory: path.join(__dirname, 'dist'),
+            },
             hot: true,
             compress: true,
             port: 9000
