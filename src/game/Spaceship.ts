@@ -45,7 +45,7 @@ export class Spaceship {
     public readonly bulletNode: SceneNode;
     public readonly bubbleNode: SceneNode;
 
-    private static readonly SFX_ASSETS = {fire: 'fire.wav'};
+    private static readonly SFX_ASSETS = {fire: 'fire.ogg'};
 
     constructor(parent: SceneNode, spaceshipOwner: SpaceshipOwner) {
         let spaceshipType = SPACESHIP_TYPES[spaceshipOwner];

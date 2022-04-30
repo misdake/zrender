@@ -50,6 +50,8 @@ const functions: { [key: string]: AnimateFunction } = {
     },
 };
 
+//TODO make it a component!?
+
 export function animate(node: SceneNode, animations: Animation[], srcs: Vec3[], time: number) {
     let updated = false;
     for (let i = 0; i < animations.length; i++) {

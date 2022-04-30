@@ -3,12 +3,6 @@ import { Renderer } from '../engine/Renderer';
 import { rendererOptions } from './Config';
 import { GameLogic, GameStateGlobal, Level } from './GameLogic';
 
-// const SfxAssets = {
-//     fire: 'fire.wav',
-//     move: 'move.wav',
-//     powerup: 'powerup.wav',
-// };
-
 // const BgmAssets = {
 //     bgm: 'bgm.ogg',
 // };
