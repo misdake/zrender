@@ -14,7 +14,7 @@ type Shape2dType = 'point' | 'linesegment' | 'polygon' | 'circle';
 // +-------------+----------+-------------+-------------+-------------+
 // | type        | point    | linesegment | polygon     | circle      |
 // +-------------+----------+-------------+-------------+-------------+
-// | point       |          | on/out      | on/in/out   | on/in/out   |
+// | point       |          | on          | on/in       | on/in       |
 // +-------------+----------+-------------+-------------+-------------+
 // | linesegment |          | test        | test/in/out | test/in/out |
 // +-------------+----------+-------------+-------------+-------------+
@@ -38,7 +38,6 @@ type Shape2dType = 'point' | 'linesegment' | 'polygon' | 'circle';
 
 export class Shape2d {
     readonly type: Shape2dType;
-    readonly ref: any;
 }
 
 type InsideFunction = (shape1: Shape2d, shape2: Shape2d) => boolean;

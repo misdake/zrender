@@ -13,6 +13,7 @@ export interface ParticleParam {
 
 export class Particle {
     readonly node: SceneNode;
+    data: any;
 
     animationSrc: Vec3[];
     animations: Animation[];

@@ -4,6 +4,7 @@ import { SceneNode } from '../engine/scene/SceneNode';
 import { Vec3 } from '../engine/util/Vec3';
 import { Particle } from '../engine/components/ParticleSystem';
 import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
+import { Layer } from './Layer';
 
 interface SpaceshipType {
     color: string,
@@ -121,7 +122,20 @@ export class Spaceship {
             (p, animations) => this.initBubble(p, animations),
             _ => true,
         );
-        this.bubbleNode.position.z = -1;
+
+        switch (spaceshipOwner) {
+            case SpaceshipOwner.player:
+                this.shipNode.position.z = Layer.player;
+                this.bulletNode.position.z = Layer.player_bullet;
+                this.bubbleNode.position.z = Layer.player_bubble;
+                break;
+            case SpaceshipOwner.enemy:
+                this.shipNode.position.z = Layer.enemy;
+                this.bulletNode.position.z = Layer.enemy_bullet;
+                this.bubbleNode.position.z = Layer.enemy_bubble;
+                break;
+
+        }
 
         parent.addChild(this.node);
         this.node.addChild(this.shipNode);
@@ -129,11 +143,13 @@ export class Spaceship {
         this.node.addChild(this.bubbleNode);
     }
 
-    public position: Vec3 = new Vec3();
-    public speed: Vec3 = new Vec3();
+    public readonly position: Vec3 = new Vec3();
+    public readonly speed: Vec3 = new Vec3();
 
     public rot: number = 0;
     public rotSpeed: number = 0;
+
+    public keepInScreen = false;
 
     //spaceship model
     private accS: number = 5;
@@ -186,22 +202,24 @@ export class Spaceship {
         this.position.setVec3(this.position.add(this.speed.multiplyScalar(dt)));
 
         //fit in screen
-        let position = this.position, margin = -2;
-        if (position.x < RENDER_LEFT - margin) {
-            position.x = RENDER_LEFT - margin;
-            this.speed.x = 0;
-        }
-        if (position.x > RENDER_RIGHT + margin) {
-            position.x = RENDER_RIGHT + margin;
-            this.speed.x = 0;
-        }
-        if (position.y < RENDER_TOP - margin) {
-            position.y = RENDER_TOP - margin;
-            this.speed.y = 0;
-        }
-        if (position.y > RENDER_BOTTOM + margin) {
-            position.y = RENDER_BOTTOM + margin;
-            this.speed.y = 0;
+        if (this.keepInScreen) {
+            let position = this.position, margin = -2;
+            if (position.x < RENDER_LEFT - margin) {
+                position.x = RENDER_LEFT - margin;
+                this.speed.x = 0;
+            }
+            if (position.x > RENDER_RIGHT + margin) {
+                position.x = RENDER_RIGHT + margin;
+                this.speed.x = 0;
+            }
+            if (position.y < RENDER_TOP - margin) {
+                position.y = RENDER_TOP - margin;
+                this.speed.y = 0;
+            }
+            if (position.y > RENDER_BOTTOM + margin) {
+                position.y = RENDER_BOTTOM + margin;
+                this.speed.y = 0;
+            }
         }
 
         //apply scene
@@ -211,6 +229,22 @@ export class Spaceship {
         if (forward) {
             this.tryEmit(dt);
         }
+    }
+
+    enable(position: Vec3, rotateTarget: Vec3) {
+        this.position.setVec3(position);
+        //atan2(x,y) not atan2(y,x) is intentional, because rot definition is different
+        this.rot = Math.atan2(rotateTarget.x - position.x, rotateTarget.y - position.y);
+
+        this.shipNode.position.setVec3(this.position);
+        this.shipNode.rotation.z = -this.rot;
+    }
+    disable() {
+        this.position.set(-10000, -10000, 0);
+        this.rot = 0;
+        this.shipNode.position.setVec3(this.position);
+        this.shipNode.rotation.z = -this.rot;
+        //no need to reset particles, keep updating
     }
 
     private fireIntervalMin = 0.1;
