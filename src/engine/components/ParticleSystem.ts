@@ -108,6 +108,10 @@ export class ParticleSystem extends Component {
         });
     }
 
+    getParticles(): readonly Particle[] {
+        return this.enabled;
+    }
+
     clear() {
         this.disabled.push(...this.enabled);
         this.enabled.length = 0;

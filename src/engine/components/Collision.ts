@@ -64,7 +64,7 @@ const testFunctions: { [key: string]: { [key: string]: { flip?: boolean, func: T
         'polygon': {func: linesegment_polygon_test},
     },
     'polygon': {
-        'linesegment': {func: linesegment_linesegment_test, flip: true},
+        'linesegment': {func: linesegment_polygon_test, flip: true},
     },
 };
 

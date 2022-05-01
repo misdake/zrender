@@ -5,6 +5,7 @@ import { Vec3 } from '../engine/util/Vec3';
 import { Particle } from '../engine/components/ParticleSystem';
 import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
 import { Layer } from './Layer';
+import { Linesegment2d, Point2d, Polygon2d } from '../engine/components/Collision';
 
 interface SpaceshipType {
     color: string,
@@ -24,15 +25,16 @@ const SPACESHIP_TYPES: { [key: string]: SpaceshipType } = {
     },
 };
 
+const polygon = [
+    {x: 0, y: -1, z: 0},
+    {x: -2, y: -2, z: 0},
+    {x: 0, y: 3, z: 0},
+    {x: 2, y: -2, z: 0},
+];
 function generateShape(color: string): DrawableAsset {
     return {
         shape: 'polyline',
-        path: [
-            {x: 0, y: -1, z: 0},
-            {x: -2, y: -2, z: 0},
-            {x: 0, y: 3, z: 0},
-            {x: 2, y: -2, z: 0},
-        ],
+        path: polygon,
         closed: true,
         stroke: 0.5,
         color: color,
@@ -71,8 +73,8 @@ export class Spaceship {
                         shape: 'rect',
                         fill: true,
                         width: 0,
-                        height: 1.5,
-                        stroke: 1,
+                        height: 1,
+                        stroke: 0.5,
                         color: spaceshipType.color,
                     },
                 },
@@ -161,7 +163,10 @@ export class Spaceship {
     private rotAccR: number = (this.rotAccS + 20);
     private rotSpeedMax: number = 4;
 
-    transform(local: Vec3): Vec3 {
+    transformToWorld(local: Vec3): Vec3 {
+        return local.rotateZ(this.rot).add(this.position);
+    }
+    rotateLocal(local: Vec3): Vec3 {
         return local.rotateZ(this.rot);
     }
 
@@ -265,13 +270,13 @@ export class Spaceship {
     }
     private initBullet(p: Particle, animations: Animation[]) {
         let moveAnimation = animations[0] as AnimateAdd;
-        p.node.position.setVec3(this.position.add(this.transform(new Vec3(0, 3, 0))));
+        p.node.position.setVec3(this.position.add(this.rotateLocal(new Vec3(0, 3, 0))));
         p.node.rotation.z = -this.rot;
 
-        this.speed.setVec3(this.speed.add(this.transform(this.bulletRecoilSpeedDelta)));
+        this.speed.setVec3(this.speed.add(this.rotateLocal(this.bulletRecoilSpeedDelta)));
 
         let speed = moveAnimation.speed = new Vec3();
-        speed.setVec3(this.transform(this.bulletFireSpeedDelta));
+        speed.setVec3(this.rotateLocal(this.bulletFireSpeedDelta));
         speed.setVec3(speed.add(this.speed));
     }
 
@@ -292,14 +297,29 @@ export class Spaceship {
         let size = 1 + Math.random();
         let offsetX = Math.random() + Math.random() - 1;
         let offsetY = (Math.random() * 2 - 1) * 0.2;
-        p.node.position.setVec3(this.position.add(this.transform(new Vec3(offsetX, -1.5 + offsetY, 0))));
+        p.node.position.setVec3(this.position.add(this.rotateLocal(new Vec3(offsetX, -1.5 + offsetY, 0))));
         p.node.scale.set(size, size, size);
         p.node.rotation.set(Math.PI / 2, this.rot, 0);
 
         let moveAnimation = animations[1] as AnimateAdd;
         let speed = moveAnimation.speed = new Vec3();
-        speed.setVec3(this.transform(this.bubbleSpeedDelta));
+        speed.setVec3(this.rotateLocal(this.bubbleSpeedDelta));
         speed.setVec3(speed.add(this.speed));
     }
 
+    getPolygon2d(): Polygon2d {
+        return new Polygon2d(polygon.map(point => {
+            let p = this.transformToWorld(new Vec3(point.x, point.y, point.z));
+            return new Point2d(p.x, p.y);
+        }));
+    }
+    getBulletLinesegment2d(): Linesegment2d[] {
+        let particles = this.bulletNode.particle.getParticles();
+        return particles.map(particle => {
+            let p = particle.node.position;
+            let p1 = new Vec3(0, 0.5, 0).rotateZ(-particle.node.rotation.z).add(p);
+            let p2 = new Vec3(0, -0.5, 0).rotateZ(-particle.node.rotation.z).add(p);
+            return new Linesegment2d(new Point2d(p1.x, p1.y), new Point2d(p2.x, p2.y));
+        });
+    }
 }
