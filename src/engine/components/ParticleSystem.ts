@@ -27,10 +27,10 @@ export class Particle {
         });
     }
 
-    spawn(initFunc: (p: Particle, animations: Animation[]) => void, animations: Animation[]) {
+    spawn(initFunc: (p: Particle, animations: Animation[], payload?: any) => void, animations: Animation[], payload?: any) {
         this.time = 0;
         this.animations = animations;
-        initFunc(this, animations);
+        initFunc(this, animations, payload);
 
         this.animationSrc = [];
         for (let animation of this.animations) {
@@ -75,7 +75,7 @@ export class ParticleSystem extends Component {
             node.addChild(this.spawnParent);
         }
     }
-    spawn() {
+    spawn(payload?: any) {
         let particle: Particle;
         if (this.disabled.length) {
             particle = this.disabled[this.disabled.length - 1];
@@ -87,7 +87,7 @@ export class ParticleSystem extends Component {
         this.enabled.push(particle);
 
         let particleAnimations = this.animations.map(a => Object.assign({}, a));
-        particle.spawn(this.initFunc, particleAnimations);
+        particle.spawn(this.initFunc, particleAnimations, payload);
         particle.update(0);
     }
 
@@ -117,9 +117,9 @@ export class ParticleSystem extends Component {
         this.enabled.length = 0;
     }
 
-    private initFunc: (p: Particle, animations: Animation[]) => void;
+    private initFunc: (p: Particle, animations: Animation[], payload?: any) => void;
     private checkFunc: (p: Particle) => boolean;
-    setCallbacks(init: (p: Particle, animations: Animation[]) => void, check: (p: Particle) => boolean) {
+    setCallbacks(init: (p: Particle, animations: Animation[], payload?: any) => void, check: (p: Particle) => boolean) {
         this.initFunc = init;
         this.checkFunc = check;
     }

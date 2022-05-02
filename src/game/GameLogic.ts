@@ -18,6 +18,8 @@ export class GameStateGlobal {
 class GameStateLevel {
     player: Spaceship;
     enemies: Enemy[] = [];
+
+    killCount: number = 0;
 }
 
 class Enemy {
@@ -99,7 +101,7 @@ export class Level {
         //TODO extract key name constants
         this.state.player.playerMove(dt, pressed['w'], pressed['s'], pressed['a'], pressed['d']);
         if (pressed[' ']) {
-            this.state.player.tryFire(dt);
+            this.state.player.tryFire(dt, true);
         }
 
         for (let enemy of this.state.enemies) {
@@ -108,6 +110,7 @@ export class Level {
                     enemy.spaceship.keepInScreen = true;
                     //TODO update ai
                     enemy.spaceship.playerMove(dt, Math.random() > 0.8, false, false, false);
+                    if (Math.random() > 0.9) enemy.spaceship.tryFire(dt, false); //TODO set a max interval for enableSfx
                 } else if (!isInScreen(enemy.spaceship.position, 10)) {
                     console.log('out of bounds', enemy.spaceship.position, isInScreen(enemy.spaceship.position, -10));
                     enemy.enabled = false;
@@ -183,21 +186,9 @@ export class Level {
             let testResult = Collision2d.test(enemyShape, ...bullets);
             let anyCollision = testResult.length > 0;
 
-            // if (insideResult.length) {
-            //     console.log('inside:');
-            //     for (let r of insideResult) {
-            //         console.log(r.shape1, r.shape2);
-            //     }
-            // }
-            // if (testResult.length) {
-            //     console.log('test:');
-            //     for (let r of testResult) {
-            //         console.log(r.point, r.shape1, r.shape2);
-            //     }
-            // }
-
             if (anyInside || anyCollision) {
-                console.log('hit!');
+                let collisionPoint = new Vec3();
+                collisionPoint.setVec3(player.position);
                 for (let r of insideResult) {
                     if (r.shape2.data && Array.isArray(r.shape2.data)) {
                         (r.shape2.data[1] as Particle).keepAlive = false;
@@ -206,9 +197,12 @@ export class Level {
                 for (let r of testResult) {
                     if (r.shape2.data && Array.isArray(r.shape2.data)) {
                         (r.shape2.data[1] as Particle).keepAlive = false;
+                        collisionPoint.set(r.point.x, r.point.y, 0);
                     }
                 }
 
+                this.state.killCount++;
+                enemy.spaceship.explode(collisionPoint);
                 enemy.spaceship.disable();
                 enemy.enabled = false;
             }

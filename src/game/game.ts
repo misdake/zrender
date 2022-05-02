@@ -46,7 +46,8 @@ async function start() {
         context.textBaseline = 'top';
         context.fillStyle = 'white';
         context.font = '20px sans-serif';
-        context.fillText(`speed ${level.state.player.speed.length().toFixed(0)}`, 10, 10);
+        context.fillText(`WASD to move, Space to fire`, 10, 10);
+        context.fillText(`kill: ${level.state.killCount}`, 10, 40);
     };
 }
 

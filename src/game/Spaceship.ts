@@ -18,10 +18,10 @@ export enum SpaceshipOwner {
 
 const SPACESHIP_TYPES: { [key: string]: SpaceshipType } = {
     player: {
-        color: '#e63',
+        color: 'rgba(238, 102, 51, 1.0)',
     },
     enemy: {
-        color: '#2e3',
+        color: 'rgba(34, 238, 51, 1.0)',
     },
 };
 
@@ -47,7 +47,7 @@ export class Spaceship {
     public readonly shipNode: SceneNode;
     public readonly bulletNode: SceneNode;
     public readonly bubbleNode: SceneNode;
-    // public readonly explosionNode: SceneNode;
+    public readonly explosionNode: SceneNode;
 
     private static readonly SFX_ASSETS = {fire: 'fire.ogg'};
 
@@ -126,50 +126,50 @@ export class Spaceship {
             _ => true,
         );
 
-        // this.explosionNode = new SceneNode('explosion', {
-        //     particle: {
-        //         particleName: 'explosion',
-        //         drawable: {
-        //             asset: {
-        //                 shape: 'cone',
-        //                 diameter: 1,
-        //                 stroke: false,
-        //                 length: 0,
-        //                 color: spaceshipType.color,
-        //             },
-        //         },
-        //         animations: [{
-        //             name: 'scale',
-        //             type: 'lerp',
-        //             field: 'scale',
-        //             duration: 1,
-        //             target: new Vec3(0, 0, 0),
-        //         }, {
-        //             name: 'move',
-        //             type: 'add',
-        //             field: 'position',
-        //             duration: 0.5,
-        //             speed: null,
-        //         }],
-        //     },
-        // });
-        // this.explosionNode.particle.setCallbacks(
-        //     (p, animations) => this.initBullet(p, animations),
-        //     p => isInScreen(p.node.position, 2),
-        // );
+        this.explosionNode = new SceneNode('explosion', {
+            particle: {
+                particleName: 'explosion',
+                drawable: {
+                    asset: {
+                        shape: 'cone',
+                        diameter: 1,
+                        stroke: 0.2,
+                        length: 0,
+                        color: spaceshipType.color.replace('1.0)', '0.2)'),
+                    },
+                },
+                animations: [{
+                    name: 'scale',
+                    type: 'lerp',
+                    field: 'scale',
+                    duration: 0.5,
+                    target: new Vec3(0, 0, 0),
+                }, {
+                    name: 'move',
+                    type: 'add',
+                    field: 'position',
+                    duration: 0.5,
+                    speed: null,
+                }],
+            },
+        });
+        this.explosionNode.particle.setCallbacks(
+            (p, animations, payload) => this.initExplosion(p, animations, payload),
+            _ => true,
+        );
 
         switch (spaceshipOwner) {
             case SpaceshipOwner.player:
                 this.shipNode.position.z = Layer.player;
                 this.bulletNode.position.z = Layer.player_bullet;
                 this.bubbleNode.position.z = Layer.player_bubble;
-                // this.explosionNode.position.z = Layer.player_explosion;
+                this.explosionNode.position.z = Layer.player_explosion;
                 break;
             case SpaceshipOwner.enemy:
                 this.shipNode.position.z = Layer.enemy;
                 this.bulletNode.position.z = Layer.enemy_bullet;
                 this.bubbleNode.position.z = Layer.enemy_bubble;
-                // this.explosionNode.position.z = Layer.enemy_explosion;
+                this.explosionNode.position.z = Layer.enemy_explosion;
                 break;
 
         }
@@ -178,7 +178,7 @@ export class Spaceship {
         this.node.addChild(this.shipNode);
         this.node.addChild(this.bulletNode);
         this.node.addChild(this.bubbleNode);
-        // this.node.addChild(this.explosionNode);
+        this.node.addChild(this.explosionNode);
     }
 
     public readonly position: Vec3 = new Vec3();
@@ -293,10 +293,12 @@ export class Spaceship {
 
     private fireIntervalMin = 0.1;
     private sinceLastFire: number = 0;
-    tryFire(dt: number) {
+    tryFire(dt: number, enableSfx: boolean) {
         this.sinceLastFire += dt;
         if (this.sinceLastFire >= this.fireIntervalMin) {
-            this.shipNode.sfx.play(Spaceship.SFX_ASSETS.fire);
+            if (enableSfx) {
+                this.shipNode.sfx.play(Spaceship.SFX_ASSETS.fire);
+            }
             this.sinceLastFire = 0;
             this.fire();
         }
@@ -316,6 +318,33 @@ export class Spaceship {
 
         let speed = moveAnimation.speed = new Vec3();
         speed.setVec3(this.rotateLocal(this.bulletFireSpeedDelta));
+        speed.setVec3(speed.add(this.speed));
+
+        p.data = this;
+    }
+
+    private explosionParticleCount = 20;
+    explode(explosionPoint: Vec3) {
+        this.explosionNode.particle.clear();
+        for (let i = 0; i < this.explosionParticleCount; i++) {
+            this.explosionNode.particle.spawn(explosionPoint);
+        }
+    }
+    private initExplosion(p: Particle, animations: Animation[], explosionPoint: Vec3) {
+        let moveAnimation = animations[1] as AnimateAdd;
+        let direction = Math.random() * Math.PI * 2;
+        let nx = Math.cos(direction);
+        let ny = Math.sin(direction);
+        let speedScalar = Math.random() * 20;
+
+        p.time = Math.random() * 0.4 - 0.2;
+        p.node.scale.set(10, 10, 10);
+        p.node.position.setVec3(explosionPoint.add(this.speed.multiplyScalar(-p.time / 2)));
+        if (p.time < 0) {
+            p.node.scale.setVec3(p.node.scale.multiplyScalar(1 / (1 - p.time)));
+        }
+
+        let speed = moveAnimation.speed = new Vec3(nx * speedScalar, ny * speedScalar, 0);
         speed.setVec3(speed.add(this.speed));
 
         p.data = this;
