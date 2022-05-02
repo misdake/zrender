@@ -49,7 +49,7 @@ export class Spaceship {
     public readonly bubbleNode: SceneNode;
     public readonly explosionNode: SceneNode;
 
-    private static readonly SFX_ASSETS = {fire: 'fire.ogg'};
+    private static readonly SFX_ASSETS = {fire: 'fire.ogg', explosion: 'explosion.ogg'};
 
     constructor(parent: SceneNode, spaceshipOwner: SpaceshipOwner) {
         let spaceshipType = SPACESHIP_TYPES[spaceshipOwner];
@@ -58,11 +58,6 @@ export class Spaceship {
         this.shipNode = new SceneNode('ship', {
             drawable: {
                 asset: generateShape(spaceshipType.color),
-            },
-            sfx: {
-                assets: Spaceship.SFX_ASSETS,
-                channel: 0,
-                baseFolder: 'assets/sound/',
             },
         });
 
@@ -86,6 +81,11 @@ export class Spaceship {
                     duration: 10000,
                     speed: null, //filled in initBullet
                 }],
+            },
+            sfx: {
+                assets: Spaceship.SFX_ASSETS,
+                channel: 0,
+                baseFolder: 'assets/sound/',
             },
         });
         this.bulletNode.particle.setCallbacks(
@@ -151,6 +151,11 @@ export class Spaceship {
                     duration: 0.5,
                     speed: null,
                 }],
+            },
+            sfx: {
+                assets: Spaceship.SFX_ASSETS,
+                channel: 1,
+                baseFolder: 'assets/sound/',
             },
         });
         this.explosionNode.particle.setCallbacks(
@@ -297,7 +302,7 @@ export class Spaceship {
         this.sinceLastFire += dt;
         if (this.sinceLastFire >= this.fireIntervalMin) {
             if (enableSfx) {
-                this.shipNode.sfx.play(Spaceship.SFX_ASSETS.fire);
+                this.bulletNode.sfx.play(Spaceship.SFX_ASSETS.fire);
             }
             this.sinceLastFire = 0;
             this.fire();
@@ -329,6 +334,7 @@ export class Spaceship {
         for (let i = 0; i < this.explosionParticleCount; i++) {
             this.explosionNode.particle.spawn(explosionPoint);
         }
+        this.explosionNode.sfx.play(Spaceship.SFX_ASSETS.explosion);
     }
     private initExplosion(p: Particle, animations: Animation[], explosionPoint: Vec3) {
         let moveAnimation = animations[1] as AnimateAdd;
