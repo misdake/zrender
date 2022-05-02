@@ -29,6 +29,7 @@ module.exports = env => {
             static: {
                 directory: path.join(__dirname, 'dist'),
             },
+            open: true,
             hot: true,
             compress: true,
             port: 9000
