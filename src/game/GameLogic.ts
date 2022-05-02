@@ -4,6 +4,7 @@ import { Scene } from '../engine/scene/Scene';
 import { Vec3 } from '../engine/util/Vec3';
 import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
 import { Collision2d } from '../engine/components/Collision';
+import { Particle } from '../engine/components/ParticleSystem';
 
 export class GameStateGlobal {
     constructor(scene: Scene) {
@@ -103,15 +104,17 @@ export class Level {
 
         for (let enemy of this.state.enemies) {
             if (enemy.enabled) {
-                if (isInScreen(enemy.spaceship.position, 2)) {
+                if (isInScreen(enemy.spaceship.position, -2)) {
                     enemy.spaceship.keepInScreen = true;
                     //TODO update ai
                     enemy.spaceship.playerMove(dt, Math.random() > 0.8, false, false, false);
+                } else if (!isInScreen(enemy.spaceship.position, 10)) {
+                    console.log('out of bounds', enemy.spaceship.position, isInScreen(enemy.spaceship.position, -10));
+                    enemy.enabled = false;
+                    enemy.spaceship.disable();
                 } else {
                     enemy.spaceship.playerMove(dt, true, false, false, false);
                 }
-            } else {
-                enemy.spaceship.disable();
             }
         }
         return pressed;
@@ -157,6 +160,7 @@ export class Level {
                 }
 
                 enemy.enabled = true;
+                enemy.spaceship.keepInScreen = false; //enabled in updateSpaceshipMove
                 enemy.spaceship.enable(new Vec3(x, y, 0), this.state.player.position);
             }
         }
@@ -174,13 +178,39 @@ export class Level {
             //TODO keep track of bullet instance
 
             let insideResult = Collision2d.inside(enemyShape, ...bullets);
-            let anyInside = !insideResult.every(i => !i);
+            let anyInside = insideResult.length > 0;
 
             let testResult = Collision2d.test(enemyShape, ...bullets);
-            let anyCollision = testResult.collisions.length > 0;
+            let anyCollision = testResult.length > 0;
+
+            // if (insideResult.length) {
+            //     console.log('inside:');
+            //     for (let r of insideResult) {
+            //         console.log(r.shape1, r.shape2);
+            //     }
+            // }
+            // if (testResult.length) {
+            //     console.log('test:');
+            //     for (let r of testResult) {
+            //         console.log(r.point, r.shape1, r.shape2);
+            //     }
+            // }
 
             if (anyInside || anyCollision) {
                 console.log('hit!');
+                for (let r of insideResult) {
+                    if (r.shape2.data && Array.isArray(r.shape2.data)) {
+                        (r.shape2.data[1] as Particle).keepAlive = false;
+                    }
+                }
+                for (let r of testResult) {
+                    if (r.shape2.data && Array.isArray(r.shape2.data)) {
+                        (r.shape2.data[1] as Particle).keepAlive = false;
+                    }
+                }
+
+                enemy.spaceship.disable();
+                enemy.enabled = false;
             }
         }
     }

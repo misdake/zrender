@@ -47,6 +47,7 @@ export class Spaceship {
     public readonly shipNode: SceneNode;
     public readonly bulletNode: SceneNode;
     public readonly bubbleNode: SceneNode;
+    // public readonly explosionNode: SceneNode;
 
     private static readonly SFX_ASSETS = {fire: 'fire.ogg'};
 
@@ -125,16 +126,50 @@ export class Spaceship {
             _ => true,
         );
 
+        // this.explosionNode = new SceneNode('explosion', {
+        //     particle: {
+        //         particleName: 'explosion',
+        //         drawable: {
+        //             asset: {
+        //                 shape: 'cone',
+        //                 diameter: 1,
+        //                 stroke: false,
+        //                 length: 0,
+        //                 color: spaceshipType.color,
+        //             },
+        //         },
+        //         animations: [{
+        //             name: 'scale',
+        //             type: 'lerp',
+        //             field: 'scale',
+        //             duration: 1,
+        //             target: new Vec3(0, 0, 0),
+        //         }, {
+        //             name: 'move',
+        //             type: 'add',
+        //             field: 'position',
+        //             duration: 0.5,
+        //             speed: null,
+        //         }],
+        //     },
+        // });
+        // this.explosionNode.particle.setCallbacks(
+        //     (p, animations) => this.initBullet(p, animations),
+        //     p => isInScreen(p.node.position, 2),
+        // );
+
         switch (spaceshipOwner) {
             case SpaceshipOwner.player:
                 this.shipNode.position.z = Layer.player;
                 this.bulletNode.position.z = Layer.player_bullet;
                 this.bubbleNode.position.z = Layer.player_bubble;
+                // this.explosionNode.position.z = Layer.player_explosion;
                 break;
             case SpaceshipOwner.enemy:
                 this.shipNode.position.z = Layer.enemy;
                 this.bulletNode.position.z = Layer.enemy_bullet;
                 this.bubbleNode.position.z = Layer.enemy_bubble;
+                // this.explosionNode.position.z = Layer.enemy_explosion;
                 break;
 
         }
@@ -143,14 +178,13 @@ export class Spaceship {
         this.node.addChild(this.shipNode);
         this.node.addChild(this.bulletNode);
         this.node.addChild(this.bubbleNode);
+        // this.node.addChild(this.explosionNode);
     }
 
     public readonly position: Vec3 = new Vec3();
     public readonly speed: Vec3 = new Vec3();
-
     public rot: number = 0;
     public rotSpeed: number = 0;
-
     public keepInScreen = false;
 
     //spaceship model
@@ -240,6 +274,8 @@ export class Spaceship {
         this.position.setVec3(position);
         //atan2(x,y) not atan2(y,x) is intentional, because rot definition is different
         this.rot = Math.atan2(rotateTarget.x - position.x, rotateTarget.y - position.y);
+        this.speed.set(0, 0, 0);
+        this.rotSpeed = 0;
 
         this.shipNode.position.setVec3(this.position);
         this.shipNode.rotation.z = -this.rot;
@@ -247,6 +283,9 @@ export class Spaceship {
     disable() {
         this.position.set(-10000, -10000, 0);
         this.rot = 0;
+        this.speed.set(0, 0, 0);
+        this.rotSpeed = 0;
+
         this.shipNode.position.setVec3(this.position);
         this.shipNode.rotation.z = -this.rot;
         //no need to reset particles, keep updating
@@ -278,6 +317,8 @@ export class Spaceship {
         let speed = moveAnimation.speed = new Vec3();
         speed.setVec3(this.rotateLocal(this.bulletFireSpeedDelta));
         speed.setVec3(speed.add(this.speed));
+
+        p.data = this;
     }
 
     private emitIntervalMin = 0.03;
@@ -311,7 +352,7 @@ export class Spaceship {
         return new Polygon2d(polygon.map(point => {
             let p = this.transformToWorld(new Vec3(point.x, point.y, point.z));
             return new Point2d(p.x, p.y);
-        }));
+        })).setData(this);
     }
     getBulletLinesegment2d(): Linesegment2d[] {
         let particles = this.bulletNode.particle.getParticles();
@@ -319,7 +360,7 @@ export class Spaceship {
             let p = particle.node.position;
             let p1 = new Vec3(0, 0.5, 0).rotateZ(-particle.node.rotation.z).add(p);
             let p2 = new Vec3(0, -0.5, 0).rotateZ(-particle.node.rotation.z).add(p);
-            return new Linesegment2d(new Point2d(p1.x, p1.y), new Point2d(p2.x, p2.y));
+            return new Linesegment2d(new Point2d(p1.x, p1.y), new Point2d(p2.x, p2.y)).setData([this, particle]);
         });
     }
 }

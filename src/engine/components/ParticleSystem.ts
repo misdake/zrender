@@ -19,7 +19,7 @@ export class Particle {
     animations: Animation[];
     time: number;
 
-    updatedThisFrame = false;
+    keepAlive = false;
 
     constructor(name: string, drawable: DrawableParam) {
         this.node = new SceneNode('particle', {
@@ -41,11 +41,11 @@ export class Particle {
 
     update(dt: number) {
         this.time += dt;
-        this.updatedThisFrame = animate(this.node, this.animations, this.animationSrc, this.time);
+        this.keepAlive = animate(this.node, this.animations, this.animationSrc, this.time);
     }
 
     check(checkEnable: (p: Particle) => boolean): boolean {
-        if (!this.updatedThisFrame) return false;
+        if (!this.keepAlive) return false;
         let enabled = checkEnable(this);
         return enabled;
     }
@@ -93,7 +93,7 @@ export class ParticleSystem extends Component {
 
     updateParticles(dt: number) {
         this.enabled.forEach(particle => {
-            particle.updatedThisFrame = false;
+            particle.keepAlive = false;
             particle.update(dt);
         });
     }

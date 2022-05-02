@@ -1,4 +1,7 @@
 export enum Layer {
+    player_explosion = 390,
+    enemy_explosion = 380,
+
     player_bullet = 290,
     enemy_bullet = 280,
 
