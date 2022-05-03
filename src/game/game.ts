@@ -42,12 +42,11 @@ async function start() {
         gameLogic.update(dt, input);
     });
 
-    renderer.preRender = (context, _width, _height) => {
-        context.textBaseline = 'top';
-        context.fillStyle = 'white';
-        context.font = '20px sans-serif';
-        context.fillText(`WASD to move, Space to fire`, 10, 10);
-        context.fillText(`kill: ${level.state.killCount}`, 10, 40);
+    renderer.preRender = (context, width, height) => {
+        gameLogic.preRender(context, width, height);
+    };
+    renderer.postRender = (context, width, height) => {
+        gameLogic.postRender(context, width, height);
     };
 }
 

@@ -20,6 +20,8 @@ class GameStateLevel {
     enemies: ShipState[] = [];
 
     killCount: number = 0;
+    state: LevelState = LevelState.PLAYING;
+    gameTime: number = 0;
 }
 
 class ShipState {
@@ -34,6 +36,11 @@ export class GameLogic {
 
     constructor(state: GameStateGlobal) {
         this.state = state;
+        this.background = new Image();
+        this.background.src = './assets/background.jpg';
+        this.background.addEventListener('load', () => {
+            this.backgroundLoaded = true;
+        }, false);
     }
 
     loadLevel(level: Level) {
@@ -49,13 +56,33 @@ export class GameLogic {
     }
 
     //TODO unload
+
+    private background: HTMLImageElement;
+    private backgroundLoaded: boolean = false;
+    preRender(context: CanvasRenderingContext2D, width: number, height: number) {
+        if (this.backgroundLoaded) {
+            let min = Math.min(this.background.width, this.background.height);
+            let ox = this.background.width > this.background.height ? (this.background.width - this.background.height) / 2 : 0;
+            let oy = this.background.width < this.background.height ? (this.background.height - this.background.width) / 2 : 0;
+            context.drawImage(this.background, ox, oy, min, min, 0, 0, width, height);
+        }
+        if (this.level) this.level.preRender(context, width, height);
+    }
+    postRender(context: CanvasRenderingContext2D, width: number, height: number) {
+        if (this.level) this.level.postRender(context, width, height);
+    }
+}
+
+enum LevelState {
+    PLAYING,
+    DEAD,
 }
 
 export class Level {
     public readonly globalState: GameStateGlobal;
     public readonly state = new GameStateLevel();
 
-    public readonly ENEMY_MAX = 5;
+    private readonly ENEMY_MAX = 5;
 
     constructor(globalState: GameStateGlobal) {
         this.globalState = globalState;
@@ -69,8 +96,8 @@ export class Level {
             enabled: true,
             spaceship: new Spaceship(this.globalState.scene.root, SpaceshipOwner.player),
         };
-        this.state.player.spaceship.enable(new Vec3(0, 0, 0), new Vec3(0, 10, 0));
-        this.state.player.spaceship.keepInScreen = true;
+
+        this.switchStatePlaying();
 
         //enemy
         //  enabled in spawnEnemy
@@ -86,20 +113,26 @@ export class Level {
     }
 
     update(dt: number, input: UserInput) {
+        switch (this.state.state) {
+            case LevelState.PLAYING:
+                this.state.gameTime += dt;
+                this.updateSpaceshipMove(input, dt);
+                this.trySpawnEnemy(dt);
+                this.testPlayerBullets();
+                if (this.state.gameTime > 1) {
+                    this.testEnemyBullets();
+                }
+                break;
 
-        this.updateSpaceshipMove(input, dt);
-
-        this.trySpawnEnemy(dt);
-
-        this.testPlayerBullets();
-
-        if (this.state.player.enabled) {
-            this.testEnemyBullets();
+            case LevelState.DEAD:
+                this.fadeTime += dt;
+                if (input.keyboard.pressed['Enter']) {
+                    this.switchStatePlaying();
+                }
+                break;
         }
-
-
-        // this.testPlayerEnemyCrash();
     }
+
 
     private updateSpaceshipMove(input: UserInput, dt: number) {
         let pressed = input.keyboard.pressed;
@@ -244,12 +277,71 @@ export class Level {
                 }
             }
 
-            player.enabled = false;
             player.spaceship.explode(collisionPoint);
-            player.spaceship.disable();
+            this.switchStateDead();
         }
     }
 
     unload() {
+    }
+
+
+    private fadeTime = 0;
+    private switchStatePlaying() {
+        this.state.state = LevelState.PLAYING;
+        this.state.gameTime = 0;
+
+        this.state.player.spaceship.enable(new Vec3(0, 0, 0), new Vec3(0, 10, 0));
+        this.state.player.spaceship.keepInScreen = true;
+        this.state.player.enabled = true;
+    }
+    private switchStateDead() {
+        this.state.state = LevelState.DEAD;
+        this.fadeTime = 0;
+
+        this.state.player.enabled = false;
+        this.state.player.spaceship.disable();
+    }
+
+
+    preRender(_context: CanvasRenderingContext2D, _width: number, _height: number) {
+
+    }
+    postRender(context: CanvasRenderingContext2D, width: number, height: number) {
+        switch (this.state.state) {
+            case LevelState.PLAYING:
+                let fontSize0 = height * 0.02;
+                context.textBaseline = 'top';
+                context.fillStyle = 'white';
+                context.font = `${fontSize0}px sans-serif`;
+                context.fillText(`WASD to move, hold SPACE to fire`, height * 0.01, height * 0.01);
+                context.fillText(`kill: ${this.state.killCount}`, height * 0.01, height * 0.035);
+                break;
+
+            case LevelState.DEAD:
+                let maskAlpha = Math.min(1, Math.max(0, this.fadeTime * 0.5));
+                maskAlpha = maskAlpha * maskAlpha * 0.8;
+                context.fillStyle = `rgba(0, 0, 0, ${maskAlpha})`;
+                context.fillRect(0, 0, width, height);
+
+                let textAlpha = Math.min(1, Math.max(0, this.fadeTime - 2) * 0.7);
+                textAlpha = Math.sqrt(textAlpha);
+                context.fillStyle = `rgba(255, 255, 255, ${textAlpha})`;
+                let fontSize1 = height * 0.1;
+                let fontSize2 = height * 0.05;
+                let fontSize3 = height * 0.05;
+                let text1 = 'Game Over';
+                let text2 = `Kill Count: ${this.state.killCount}`;
+                let text3 = `Press ENTER to continue`;
+                context.textBaseline = 'top';
+                context.font = `${fontSize1}px sans-serif`;
+                context.fillText(text1, width * 0.1, height * 0.1);
+                context.font = `${fontSize2}px sans-serif`;
+                context.fillText(text2, width * 0.1, height * 0.225);
+                context.font = `${fontSize3}px sans-serif`;
+                context.textBaseline = 'bottom';
+                context.fillText(text3, width * 0.1, height * 0.9);
+                break;
+        }
     }
 }
