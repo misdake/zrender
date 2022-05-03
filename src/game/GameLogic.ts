@@ -16,16 +16,15 @@ export class GameStateGlobal {
 }
 
 class GameStateLevel {
-    player: Spaceship;
-    enemies: Enemy[] = [];
+    player: ShipState;
+    enemies: ShipState[] = [];
 
     killCount: number = 0;
 }
 
-class Enemy {
-    spaceship: Spaceship;
+class ShipState {
     enabled: boolean;
-
+    spaceship: Spaceship;
 }
 
 export class GameLogic {
@@ -66,16 +65,19 @@ export class Level {
         //player
         //  enabled at start
         //  never disable
-        this.state.player = new Spaceship(this.globalState.scene.root, SpaceshipOwner.player);
-        this.state.player.enable(new Vec3(0, 0, 0), new Vec3(0, 10, 0));
-        this.state.player.keepInScreen = true;
+        this.state.player = {
+            enabled: true,
+            spaceship: new Spaceship(this.globalState.scene.root, SpaceshipOwner.player),
+        };
+        this.state.player.spaceship.enable(new Vec3(0, 0, 0), new Vec3(0, 10, 0));
+        this.state.player.spaceship.keepInScreen = true;
 
         //enemy
         //  enabled in spawnEnemy
         //  disabled in ? TODO
         for (let i = 0; i < this.ENEMY_MAX; i++) {
             let enemyShip = new Spaceship(this.globalState.scene.root, SpaceshipOwner.enemy);
-            let enemy = new Enemy();
+            let enemy = new ShipState();
             enemy.spaceship = enemyShip;
             enemy.enabled = false;
             this.state.enemies.push(enemy);
@@ -84,13 +86,17 @@ export class Level {
     }
 
     update(dt: number, input: UserInput) {
+
         this.updateSpaceshipMove(input, dt);
 
         this.trySpawnEnemy(dt);
 
         this.testPlayerBullets();
 
-        // this.testEnemyBullets();
+        if (this.state.player.enabled) {
+            this.testEnemyBullets();
+        }
+
 
         // this.testPlayerEnemyCrash();
     }
@@ -99,9 +105,12 @@ export class Level {
         let pressed = input.keyboard.pressed;
 
         //TODO extract key name constants
-        this.state.player.playerMove(dt, pressed['w'], pressed['s'], pressed['a'], pressed['d']);
-        if (pressed[' ']) {
-            this.state.player.tryFire(dt, true);
+        let player = this.state.player;
+        if (player.enabled) {
+            player.spaceship.playerMove(dt, pressed['w'], pressed['s'], pressed['a'], pressed['d']);
+            if (pressed[' ']) {
+                player.spaceship.tryFire(dt, true);
+            }
         }
 
         for (let enemy of this.state.enemies) {
@@ -164,21 +173,19 @@ export class Level {
 
                 enemy.enabled = true;
                 enemy.spaceship.keepInScreen = false; //enabled in updateSpaceshipMove
-                enemy.spaceship.enable(new Vec3(x, y, 0), this.state.player.position);
+                enemy.spaceship.enable(new Vec3(x, y, 0), this.state.player.spaceship.position);
             }
         }
     }
 
     private testPlayerBullets() {
         let player = this.state.player;
-        let bullets = player.getBulletLinesegment2d();
+        let bullets = player.spaceship.getBulletLinesegment2d();
         if (bullets.length === 0) return;
 
         let enemies = this.state.enemies.filter(i => i.enabled);
         for (let enemy of enemies) {
             let enemyShape = enemy.spaceship.getPolygon2d();
-
-            //TODO keep track of bullet instance
 
             let insideResult = Collision2d.inside(enemyShape, ...bullets);
             let anyInside = insideResult.length > 0;
@@ -188,7 +195,7 @@ export class Level {
 
             if (anyInside || anyCollision) {
                 let collisionPoint = new Vec3();
-                collisionPoint.setVec3(player.position);
+                collisionPoint.setVec3(enemy.spaceship.position);
                 for (let r of insideResult) {
                     if (r.shape2.data && Array.isArray(r.shape2.data)) {
                         (r.shape2.data[1] as Particle).keepAlive = false;
@@ -206,6 +213,40 @@ export class Level {
                 enemy.spaceship.disable();
                 enemy.enabled = false;
             }
+        }
+    }
+
+    private testEnemyBullets() {
+        let bulletLists = this.state.enemies.map(enemy => enemy.spaceship.getBulletLinesegment2d());
+        let bullets = bulletLists.reduce((acc, val) => acc.concat(val), []);
+
+        let player = this.state.player;
+        let playerShape = player.spaceship.getPolygon2d();
+
+        let insideResult = Collision2d.inside(playerShape, ...bullets);
+        let anyInside = insideResult.length > 0;
+
+        let testResult = Collision2d.test(playerShape, ...bullets);
+        let anyCollision = testResult.length > 0;
+
+        if (anyInside || anyCollision) {
+            let collisionPoint = new Vec3();
+            collisionPoint.setVec3(player.spaceship.position);
+            for (let r of insideResult) {
+                if (r.shape2.data && Array.isArray(r.shape2.data)) {
+                    (r.shape2.data[1] as Particle).keepAlive = false;
+                }
+            }
+            for (let r of testResult) {
+                if (r.shape2.data && Array.isArray(r.shape2.data)) {
+                    (r.shape2.data[1] as Particle).keepAlive = false;
+                    collisionPoint.set(r.point.x, r.point.y, 0);
+                }
+            }
+
+            player.enabled = false;
+            player.spaceship.explode(collisionPoint);
+            player.spaceship.disable();
         }
     }
 
