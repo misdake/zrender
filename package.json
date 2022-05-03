@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "webpack --env production",
-    "dev": "webpack-dev-server",
+    "dev": "node webpack.js",
     "test": "mocha -r ts-node/register src/tests/**/*.test.ts"
   },
   "dependencies": {
