@@ -5,6 +5,7 @@ import { Vec3 } from '../engine/util/Vec3';
 import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
 import { Collision2d } from '../engine/components/Collision';
 import { Particle } from '../engine/components/ParticleSystem';
+import { Bgm, BgmParam } from '../engine/Bgm';
 
 export class GameStateGlobal {
     constructor(scene: Scene) {
@@ -29,10 +30,16 @@ class ShipState {
     spaceship: Spaceship;
 }
 
+const BgmAssets = {
+    bgm: 'bgm.ogg',
+};
+
 export class GameLogic {
 
     public state: GameStateGlobal;
     public level: Level;
+    private readonly bgm: Bgm;
+    private bgmReady: boolean = false;
 
     constructor(state: GameStateGlobal) {
         this.state = state;
@@ -41,6 +48,19 @@ export class GameLogic {
         this.background.addEventListener('load', () => {
             this.backgroundLoaded = true;
         }, false);
+
+        let bgmParam: BgmParam = {
+            assets: BgmAssets,
+            baseFolder: 'assets/bgm/',
+            channel: 2,
+            onLoaded: _bgm => {
+                this.bgmReady = true;
+                // this.bgm.play(BgmAssets.bgm, 0.7, true); //try to play if not loaded yet at game start
+            },
+            onEnd: (_bgm, _asset) => {
+            },
+        };
+        this.bgm = new Bgm(bgmParam);
     }
 
     loadLevel(level: Level) {
@@ -50,7 +70,16 @@ export class GameLogic {
     }
 
     update(dt: number, input: UserInput) {
-        if (this.level) {
+        if (!this.level) {
+            if (input.keyboard.pressed['Enter']) {
+                if (this.bgmReady && !this.bgm.currentAsset) {
+                    this.bgm.play(BgmAssets.bgm, 0.5, true);
+                }
+
+                let level = new Level(this.state);
+                this.loadLevel(level);
+            }
+        } else {
             this.level.update(dt, input);
         }
     }
@@ -66,7 +95,25 @@ export class GameLogic {
             let oy = this.background.width < this.background.height ? (this.background.height - this.background.width) / 2 : 0;
             context.drawImage(this.background, ox, oy, min, min, 0, 0, width, height);
         }
-        if (this.level) this.level.preRender(context, width, height);
+        if (!this.level) {
+            let fontSize1 = height * 0.1;
+            let fontSize2 = height * 0.05;
+            let fontSize3 = height * 0.05;
+            context.fillStyle = 'white';
+            let text1 = 'Space Battle';
+            let text2 = 'Demo';
+            let text3 = `Press ENTER to start`;
+            context.textBaseline = 'top';
+            context.font = `${fontSize1}px sans-serif`;
+            context.fillText(text1, width * 0.1, height * 0.1);
+            context.font = `${fontSize2}px sans-serif`;
+            context.fillText(text2, width * 0.1, height * 0.225);
+            context.font = `${fontSize3}px sans-serif`;
+            context.textBaseline = 'bottom';
+            context.fillText(text3, width * 0.1, height * 0.9);
+        } else {
+            this.level.preRender(context, width, height);
+        }
     }
     postRender(context: CanvasRenderingContext2D, width: number, height: number) {
         if (this.level) this.level.postRender(context, width, height);
@@ -290,6 +337,7 @@ export class Level {
     private switchStatePlaying() {
         this.state.state = LevelState.PLAYING;
         this.state.gameTime = 0;
+        this.state.killCount = 0;
 
         this.state.player.spaceship.enable(new Vec3(0, 0, 0), new Vec3(0, 10, 0));
         this.state.player.spaceship.keepInScreen = true;
