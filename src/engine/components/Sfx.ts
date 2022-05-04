@@ -31,11 +31,12 @@ export class Sfx extends Component {
         return this._assets;
     }
 
-    play(asset: SoundAsset, volume: number = 1.0, loop: boolean = false) {
+    play(asset: SoundAsset, volume: number = 1.0, loop: boolean = false): AudioBufferSourceNode {
         if (this._assets.has(asset)) {
-            SoundPlayer.getInstance(this.channel).play(asset, volume, loop);
+            return SoundPlayer.getInstance(this.channel).play(asset, volume, loop);
         } else {
             console.log(`cannot find sfx asset: ${asset} from ${this._assets}`);
+            return null;
         }
     }
 }

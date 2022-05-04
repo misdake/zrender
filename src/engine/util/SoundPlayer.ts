@@ -12,11 +12,11 @@ export class SoundPlayer {
     static load(assets: SoundAssets, baseFolder: string): Promise<void[]> {
         return Promise.all(Object.values(assets).map(asset => {
             if (SoundPlayer.loadStarted.has(asset)) {
-                console.log("load skipped", asset);
+                // console.log("load skipped", asset);
                 return Promise.resolve();
             }
             SoundPlayer.loadStarted.add(asset);
-            console.log("load started", asset);
+            // console.log("load started", asset);
 
             let promise = new Promise<void>(resolve => {
                 let request = new XMLHttpRequest();
@@ -25,7 +25,7 @@ export class SoundPlayer {
                 request.responseType = 'arraybuffer';
                 request.onload = () => {
                     this.loadContext.decodeAudioData(request.response).then(buffer => {
-                        console.log("load finished", filePath);
+                        // console.log("load finished", filePath);
                         this.sounds.set(asset, buffer);
                         resolve();
                     }).catch(() => {

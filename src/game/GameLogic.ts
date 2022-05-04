@@ -6,6 +6,7 @@ import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from
 import { Collision2d } from '../engine/components/Collision';
 import { Particle } from '../engine/components/ParticleSystem';
 import { Bgm, BgmParam } from '../engine/Bgm';
+import { EnemyAi } from './Ai';
 
 export class GameStateGlobal {
     constructor(scene: Scene) {
@@ -16,7 +17,7 @@ export class GameStateGlobal {
     //TODO spawn policy
 }
 
-class GameStateLevel {
+export class GameStateLevel {
     player: ShipState;
     enemies: ShipState[] = [];
 
@@ -28,6 +29,7 @@ class GameStateLevel {
 class ShipState {
     enabled: boolean;
     spaceship: Spaceship;
+    enemyAi?: EnemyAi;
 }
 
 const BgmAssets = {
@@ -52,10 +54,9 @@ export class GameLogic {
         let bgmParam: BgmParam = {
             assets: BgmAssets,
             baseFolder: 'assets/bgm/',
-            channel: 2,
+            channel: 10,
             onLoaded: _bgm => {
                 this.bgmReady = true;
-                // this.bgm.play(BgmAssets.bgm, 0.7, true); //try to play if not loaded yet at game start
             },
             onEnd: (_bgm, _asset) => {
             },
@@ -72,14 +73,13 @@ export class GameLogic {
     update(dt: number, input: UserInput) {
         if (!this.level) {
             if (input.keyboard.pressed['Enter']) {
-                if (this.bgmReady && !this.bgm.currentAsset) {
-                    this.bgm.play(BgmAssets.bgm, 0.5, true);
-                }
-
                 let level = new Level(this.state);
                 this.loadLevel(level);
             }
         } else {
+            if (this.bgmReady && !this.bgm.currentAsset) {
+                this.bgm.play(BgmAssets.bgm, 0.5, true);
+            }
             this.level.update(dt, input);
         }
     }
@@ -154,6 +154,7 @@ export class Level {
             let enemy = new ShipState();
             enemy.spaceship = enemyShip;
             enemy.enabled = false;
+            enemy.enemyAi = new EnemyAi();
             this.state.enemies.push(enemy);
             enemyShip.disable();
         }
@@ -166,9 +167,7 @@ export class Level {
                 this.updateSpaceshipMove(input, dt);
                 this.trySpawnEnemy(dt);
                 this.testPlayerBullets();
-                if (this.state.gameTime > 1) {
-                    this.testEnemyBullets();
-                }
+                this.testEnemyBullets();
                 break;
 
             case LevelState.DEAD:
@@ -187,7 +186,7 @@ export class Level {
         //TODO extract key name constants
         let player = this.state.player;
         if (player.enabled) {
-            player.spaceship.playerMove(dt, pressed['w'], pressed['s'], pressed['a'], pressed['d']);
+            player.spaceship.playerMove(dt, pressed['w'], pressed['s'], pressed['a'], pressed['d'], true);
             if (pressed[' ']) {
                 player.spaceship.tryFire(dt, true);
             }
@@ -196,15 +195,17 @@ export class Level {
         for (let enemy of this.state.enemies) {
             if (enemy.enabled) {
                 if (isInScreen(enemy.spaceship.position, -2)) {
+                    //in screen - run AI
                     enemy.spaceship.keepInScreen = true;
-                    //TODO update ai
-                    enemy.spaceship.playerMove(dt, Math.random() > 0.8, false, false, false);
-                    if (Math.random() > 0.9) enemy.spaceship.tryFire(dt, false); //TODO set a max interval for enableSfx
+                    enemy.enemyAi.updateMove(dt, this.state, enemy.spaceship, player.spaceship);
+
                 } else if (!isInScreen(enemy.spaceship.position, 10)) {
-                    console.log('out of bounds', enemy.spaceship.position, isInScreen(enemy.spaceship.position, -10));
+                    //out of bounds - just kill it
                     enemy.enabled = false;
                     enemy.spaceship.disable();
+
                 } else {
+                    //running into screen
                     enemy.spaceship.playerMove(dt, true, false, false, false);
                 }
             }
@@ -223,13 +224,15 @@ export class Level {
             if (valid.length) {
                 let enemy = valid[0];
 
+                //TODO keep side away from player
                 let side = Math.floor(Math.random() * 4);
                 let v = Math.random();
 
-                const l = RENDER_LEFT - 4;
-                const r = RENDER_RIGHT + 4;
-                const t = RENDER_TOP - 4;
-                const b = RENDER_BOTTOM + 4;
+                const margin = -4;
+                const l = RENDER_LEFT + margin;
+                const r = RENDER_RIGHT - margin;
+                const t = RENDER_TOP + margin;
+                const b = RENDER_BOTTOM - margin;
 
                 let x: number = 0, y: number = 0;
                 switch (side) {
@@ -254,6 +257,7 @@ export class Level {
                 enemy.enabled = true;
                 enemy.spaceship.keepInScreen = false; //enabled in updateSpaceshipMove
                 enemy.spaceship.enable(new Vec3(x, y, 0), this.state.player.spaceship.position);
+                enemy.enemyAi.init();
             }
         }
     }

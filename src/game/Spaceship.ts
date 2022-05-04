@@ -49,7 +49,7 @@ export class Spaceship {
     public readonly bubbleNode: SceneNode;
     public readonly explosionNode: SceneNode;
 
-    private static readonly SFX_ASSETS = {fire: 'fire.ogg', explosion: 'explosion.ogg'};
+    private static readonly SFX_ASSETS = {fire: 'fire.ogg', explosion: 'explosion.ogg', engine: 'engine.ogg'};
 
     constructor(parent: SceneNode, spaceshipOwner: SpaceshipOwner) {
         let spaceshipType = SPACESHIP_TYPES[spaceshipOwner];
@@ -58,6 +58,11 @@ export class Spaceship {
         this.shipNode = new SceneNode('ship', {
             drawable: {
                 asset: generateShape(spaceshipType.color),
+            },
+            sfx: {
+                assets: Spaceship.SFX_ASSETS,
+                channel: 2,
+                baseFolder: 'assets/sound/',
             },
         });
 
@@ -209,7 +214,9 @@ export class Spaceship {
         return local.rotateZ(this.rot);
     }
 
-    playerMove(dt: number, forward: boolean, backward: boolean, left: boolean, right: boolean) {
+    private engineSfx?: AudioBufferSourceNode;
+
+    playerMove(dt: number, forward: boolean, backward: boolean, left: boolean, right: boolean, enableEngineSfx: boolean = false) {
         let acc = 0;
         if (forward) acc += this.accF;
         if (backward) acc += this.accB;
@@ -272,6 +279,16 @@ export class Spaceship {
 
         if (forward) {
             this.tryEmit(dt);
+            if (!this.engineSfx && enableEngineSfx) {
+                this.engineSfx = this.shipNode.sfx.play(Spaceship.SFX_ASSETS.engine, 0.3, true);
+                console.log('play!');
+            }
+        } else {
+            if (this.engineSfx) {
+                this.engineSfx.stop();
+                console.log('stop!');
+                this.engineSfx = null;
+            }
         }
     }
 
@@ -294,6 +311,10 @@ export class Spaceship {
         this.shipNode.position.setVec3(this.position);
         this.shipNode.rotation.z = -this.rot;
         //no need to reset particles, keep updating
+        if (this.engineSfx) {
+            this.engineSfx.stop();
+            this.engineSfx = null;
+        }
     }
 
     private fireIntervalMin = 0.1;
@@ -302,7 +323,7 @@ export class Spaceship {
         this.sinceLastFire += dt;
         if (this.sinceLastFire >= this.fireIntervalMin) {
             if (enableSfx) {
-                this.bulletNode.sfx.play(Spaceship.SFX_ASSETS.fire);
+                this.bulletNode.sfx.play(Spaceship.SFX_ASSETS.fire, 0.7);
             }
             this.sinceLastFire = 0;
             this.fire();
@@ -334,7 +355,7 @@ export class Spaceship {
         for (let i = 0; i < this.explosionParticleCount; i++) {
             this.explosionNode.particle.spawn(explosionPoint);
         }
-        this.explosionNode.sfx.play(Spaceship.SFX_ASSETS.explosion);
+        this.explosionNode.sfx.play(Spaceship.SFX_ASSETS.explosion, 0.6);
     }
     private initExplosion(p: Particle, animations: Animation[], explosionPoint: Vec3) {
         let moveAnimation = animations[1] as AnimateAdd;
