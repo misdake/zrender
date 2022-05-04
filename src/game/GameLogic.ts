@@ -100,7 +100,7 @@ export class GameLogic {
             let fontSize2 = height * 0.05;
             let fontSize3 = height * 0.05;
             context.fillStyle = 'white';
-            let text1 = 'Space Battle';
+            let text1 = 'Space Shooter';
             let text2 = 'Demo';
             let text3 = `Press ENTER to start`;
             context.textBaseline = 'top';

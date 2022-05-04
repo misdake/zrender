@@ -19,7 +19,7 @@ export class EnemyAi {
 
     private static readonly MODE_TIMER_MAX = 5;
     private static readonly FIRE_INTERVAL_MIN = 2;
-    private static readonly FIRE_INTERVAL_MAX = 3.5;
+    private static readonly FIRE_INTERVAL_MAX = 3;
 
     private modeTimer: number;
     private mode: AiMode;
@@ -36,9 +36,7 @@ export class EnemyAi {
         this.setMode(mode as AiMode);
     }
     private setMode(mode: AiMode) {
-        console.log('setMode', mode);
         this.mode = mode;
-
         this.modeTimer = EnemyAi.MODE_TIMER_MAX;
 
         this.angleTolerant = true;
