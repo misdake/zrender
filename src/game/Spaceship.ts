@@ -216,7 +216,7 @@ export class Spaceship {
 
     private engineSfx?: AudioBufferSourceNode;
 
-    playerMove(dt: number, forward: boolean, backward: boolean, left: boolean, right: boolean, enableEngineSfx: boolean = false) {
+    move(dt: number, forward: boolean, backward: boolean, left: boolean, right: boolean, enableEngineSfx: boolean = false) {
         let acc = 0;
         if (forward) acc += this.accF;
         if (backward) acc += this.accB;
@@ -281,12 +281,10 @@ export class Spaceship {
             this.tryEmit(dt);
             if (!this.engineSfx && enableEngineSfx) {
                 this.engineSfx = this.shipNode.sfx.play(Spaceship.SFX_ASSETS.engine, 0.3, true);
-                console.log('play!');
             }
         } else {
             if (this.engineSfx) {
                 this.engineSfx.stop();
-                console.log('stop!');
                 this.engineSfx = null;
             }
         }
@@ -316,14 +314,16 @@ export class Spaceship {
             this.engineSfx = null;
         }
     }
+    updateTime(dt: number) {
+        this.sinceLastFire += dt;
+    }
 
     private fireIntervalMin = 0.1;
     private sinceLastFire: number = 0;
-    tryFire(dt: number, enableSfx: boolean) {
-        this.sinceLastFire += dt;
+    tryFire(enableSfx: boolean, volume: number = 0.7) {
         if (this.sinceLastFire >= this.fireIntervalMin) {
             if (enableSfx) {
-                this.bulletNode.sfx.play(Spaceship.SFX_ASSETS.fire, 0.7);
+                this.bulletNode.sfx.play(Spaceship.SFX_ASSETS.fire, volume);
             }
             this.sinceLastFire = 0;
             this.fire();

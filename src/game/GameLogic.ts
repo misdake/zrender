@@ -148,15 +148,15 @@ export class Level {
 
         //enemy
         //  enabled in spawnEnemy
-        //  disabled in ? TODO
+        //  disabled in hit test
         for (let i = 0; i < this.ENEMY_MAX; i++) {
             let enemyShip = new Spaceship(this.globalState.scene.root, SpaceshipOwner.enemy);
             let enemy = new ShipState();
             enemy.spaceship = enemyShip;
             enemy.enabled = false;
             enemy.enemyAi = new EnemyAi();
-            this.state.enemies.push(enemy);
             enemyShip.disable();
+            this.state.enemies.push(enemy);
         }
     }
 
@@ -186,18 +186,21 @@ export class Level {
         //TODO extract key name constants
         let player = this.state.player;
         if (player.enabled) {
-            player.spaceship.playerMove(dt, pressed['w'], pressed['s'], pressed['a'], pressed['d'], true);
+            player.spaceship.updateTime(dt);
+            player.spaceship.move(dt, pressed['w'], pressed['s'], pressed['a'], pressed['d'], true);
             if (pressed[' ']) {
-                player.spaceship.tryFire(dt, true);
+                player.spaceship.tryFire(true);
             }
         }
 
         for (let enemy of this.state.enemies) {
             if (enemy.enabled) {
+                enemy.spaceship.updateTime(dt);
+
                 if (isInScreen(enemy.spaceship.position, -2)) {
                     //in screen - run AI
                     enemy.spaceship.keepInScreen = true;
-                    enemy.enemyAi.updateMove(dt, this.state, enemy.spaceship, player.spaceship);
+                    enemy.enemyAi.updateMove(dt, this.state);
 
                 } else if (!isInScreen(enemy.spaceship.position, 10)) {
                     //out of bounds - just kill it
@@ -206,7 +209,7 @@ export class Level {
 
                 } else {
                     //running into screen
-                    enemy.spaceship.playerMove(dt, true, false, false, false);
+                    enemy.spaceship.move(dt, true, false, false, false);
                 }
             }
         }
@@ -257,7 +260,7 @@ export class Level {
                 enemy.enabled = true;
                 enemy.spaceship.keepInScreen = false; //enabled in updateSpaceshipMove
                 enemy.spaceship.enable(new Vec3(x, y, 0), this.state.player.spaceship.position);
-                enemy.enemyAi.init();
+                enemy.enemyAi.init(enemy.spaceship, this.state.player.spaceship);
             }
         }
     }
@@ -346,6 +349,11 @@ export class Level {
         this.state.player.spaceship.enable(new Vec3(0, 0, 0), new Vec3(0, 10, 0));
         this.state.player.spaceship.keepInScreen = true;
         this.state.player.enabled = true;
+
+        for (let enemy of this.state.enemies) {
+            enemy.spaceship.disable();
+            enemy.enabled = false;
+        }
     }
     private switchStateDead() {
         this.state.state = LevelState.DEAD;

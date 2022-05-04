@@ -8,16 +8,15 @@ export const rendererOptions: RendererOptions = {
     logicalHeight: 100,
 };
 
-export const RENDER_WIDTH = 100;
-export const RENDER_HEIGHT = 100;
+export const RENDER_SIZE = 100;
 export const RENDER_LEFT = -50;
 export const RENDER_RIGHT = 50;
 export const RENDER_TOP = -50;
 export const RENDER_BOTTOM = 50;
 
 export function isInScreen(position: Vec3, margin: number = 0): boolean {
-    return Math.abs(position.x) <= (RENDER_WIDTH / 2 + margin)
-        && Math.abs(position.y) <= (RENDER_HEIGHT / 2 + margin);
+    return Math.abs(position.x) <= (RENDER_SIZE / 2 + margin)
+        && Math.abs(position.y) <= (RENDER_SIZE / 2 + margin);
 }
 
 export function setInScreen(position: Vec3, margin: number = 0) {
