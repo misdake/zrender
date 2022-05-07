@@ -30,7 +30,7 @@ type Shape2dType = 'point' | 'linesegment' | 'polygon' | 'circle';
 // +-------------+----------+-------------+-------------+-------------+
 // | type        | point    | linesegment | polygon     | circle      |
 // +-------------+----------+-------------+-------------+-------------+
-// | point       |          |             | in          |             |
+// | point       |          |             | in          | in          |
 // +-------------+----------+-------------+-------------+-------------+
 // | linesegment |          | test        | in/test     |             |
 // +-------------+----------+-------------+-------------+-------------+
@@ -56,6 +56,7 @@ const insideFunctions: { [key: string]: { [key: string]: { flip?: boolean, func:
     //TODO more
     'point': {
         'polygon': {func: point_polygon_inside},
+        'circle': {func: point_circle_inside},
     },
     'linesegment': {
         'polygon': {func: linesegment_polygon_inside},
@@ -155,6 +156,12 @@ function point_polygon_inside(point: Point2d, polygon: Polygon2d): boolean {
     return r;
 }
 
+function point_circle_inside(point: Point2d, circle: Circle2d): boolean {
+    let dx = point.x - circle.center.x;
+    let dy = point.y - circle.center.y;
+    return dx * dx + dy * dy < circle.radius * circle.radius;
+}
+
 function linesegment_polygon_inside(line: Linesegment2d, polygon: Polygon2d): boolean {
     //no intersections
     let r = linesegment_polygon_test(line, polygon);
@@ -217,23 +224,23 @@ export class Linesegment2d extends Shape2d {
     readonly type = 'linesegment';
     readonly point1: Point2d;
     readonly point2: Point2d;
-    readonly direction: Point2d; // normalize(point2-point1)
 
     constructor(point1: Point2d, point2: Point2d) {
         super();
         this.point1 = point1;
         this.point2 = point2;
+    }
+}
 
-        let dx = point2.x - point1.x;
-        let dy = point2.y - point1.y;
-        let d = Math.hypot(dx, dy);
-        if (d < EPSINON) {
-            console.error('zero length linesegment', point1, point2);
-            dx = 0;
-            dy = 0;
-            d = 1;
-        }
-        this.direction = new Point2d(dx / d, dy / d);
+export class Circle2d extends Shape2d {
+    readonly type = 'circle';
+    readonly center: Point2d;
+    readonly radius: number;
+
+    constructor(center: Point2d, radius: number) {
+        super();
+        this.center = center;
+        this.radius = radius;
     }
 }
 
