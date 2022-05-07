@@ -6,7 +6,7 @@ import { Particle } from '../engine/components/ParticleSystem';
 import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
 import { Layer } from './Layer';
 import { Circle2d, Linesegment2d, Point2d, Polygon2d } from '../engine/components/Collision';
-import { Ellipse } from 'zdog';
+import { Ellipse, Rect } from 'zdog';
 import { now } from '../engine/Renderer';
 
 interface SpaceshipType {
@@ -22,7 +22,6 @@ enum ShieldState {
     DOWN,
     DOWN_to_UP,
     UP,
-    UP_to_DOWN,
 }
 
 const SPACESHIP_TYPES: { [key: string]: SpaceshipType } = {
@@ -61,7 +60,8 @@ export class Spaceship {
 
     public readonly node: SceneNode;
     public readonly shipNode: SceneNode;
-    public readonly shieldNode: SceneNode;
+    public readonly shield1Node: SceneNode;
+    public readonly shield2Node: SceneNode;
     public readonly bulletNode: SceneNode;
     public readonly bubbleNode: SceneNode;
     public readonly explosionNode: SceneNode;
@@ -84,16 +84,48 @@ export class Spaceship {
         });
 
         if (spaceshipOwner === SpaceshipOwner.player) {
-            this.shieldNode = new SceneNode('shield', {
+            this.shield1Node = new SceneNode('shield', {
                 drawable: {
                     asset: {
                         shape: 'ellipse',
-                        diameter: 9,
-                        stroke: 0.3,
-                        color: generateShieldColor(0.8),
+                        diameter: Spaceship.SHIELD_RADIUS * 2,
+                        stroke: Spaceship.SHIELD_STROKE,
+                        color: generateShieldColor(Spaceship.SHIELD_BASE_ALPHA),
                     },
                 },
             });
+            this.shield2Node = new SceneNode('shield pieces', {
+                particle: {
+                    particleName: 'shield pieces',
+                    drawable: {
+                        asset: {
+                            shape: 'rect',
+                            fill: true,
+                            width: Spaceship.SHIELD_STROKE * 2,
+                            height: Spaceship.SHIELD_RADIUS * Math.PI * 2 / Spaceship.SHIELD_PIECE_COUNT,
+                            stroke: false,
+                            color: generateShieldColor(Spaceship.SHIELD_BASE_ALPHA),
+                        },
+                    },
+                    animations: [{
+                        name: 'move',
+                        type: 'add',
+                        field: 'position',
+                        duration: Spaceship.SHIELD_UP2DOWN_TIME,
+                        speed: null, //filled in initBullet
+                    }, {
+                        name: 'scale',
+                        type: 'lerp',
+                        field: 'scale',
+                        duration: Spaceship.SHIELD_UP2DOWN_TIME,
+                        target: new Vec3(0, 0.8, 0),
+                    }],
+                },
+            });
+            this.shield2Node.particle.setCallbacks(
+                (p, animations, rad) => this.initShieldPiece(p, animations, rad),
+                _ => true,
+            );
         }
 
         this.bulletNode = new SceneNode('bullet', {
@@ -201,7 +233,8 @@ export class Spaceship {
         switch (spaceshipOwner) {
             case SpaceshipOwner.player:
                 this.shipNode.position.z = Layer.player;
-                this.shieldNode.position.z = Layer.player;
+                this.shield1Node.position.z = Layer.player;
+                this.shield2Node.position.z = Layer.player;
                 this.bulletNode.position.z = Layer.player_bullet;
                 this.bubbleNode.position.z = Layer.player_bubble;
                 this.explosionNode.position.z = Layer.player_explosion;
@@ -215,8 +248,9 @@ export class Spaceship {
         }
 
         parent.addChild(this.node);
-        if (this.shieldNode) this.shipNode.addChild(this.shieldNode);
         this.node.addChild(this.shipNode);
+        if (this.shield1Node) this.node.addChild(this.shield1Node);
+        if (this.shield2Node) this.node.addChild(this.shield2Node);
         this.node.addChild(this.bulletNode);
         this.node.addChild(this.bubbleNode);
         this.node.addChild(this.explosionNode);
@@ -319,6 +353,10 @@ export class Spaceship {
                 this.engineSfx = null;
             }
         }
+
+        if (this.shield1Node) {
+            this.shield1Node.position.setVec3(this.position);
+        }
     }
 
     enable(position: Vec3, rotateTarget: Vec3) {
@@ -385,9 +423,13 @@ export class Spaceship {
 
     private shieldState: ShieldState = ShieldState.UP;
     private shieldStateTimer: number = 0;
-    private static readonly SHIELD_REGEN_TIME = 3;
-    private static readonly SHIELD_UP2DOWN_TIME = 0.1;
-    private static readonly SHIELD_DOWN2UP_TIME = 0.1;
+    private static readonly SHIELD_RADIUS = 4.5;
+    private static readonly SHIELD_STROKE = 0.3;
+    private static readonly SHIELD_REGEN_TIME = 5;
+    private static readonly SHIELD_UP2DOWN_TIME = 0.4;
+    private static readonly SHIELD_DOWN2UP_TIME = 0.2;
+    private static readonly SHIELD_BASE_ALPHA = 0.5;
+    private static readonly SHIELD_PIECE_COUNT = 29;
     isShieldUp(): boolean {
         return this.shieldState === ShieldState.UP;
     }
@@ -406,10 +448,6 @@ export class Spaceship {
                 case ShieldState.UP:
                     this.shieldStateTimer = 0;
                     break;
-                case ShieldState.UP_to_DOWN:
-                    this.shieldState = ShieldState.DOWN;
-                    this.shieldStateTimer += Spaceship.SHIELD_REGEN_TIME;
-                    break;
             }
         }
 
@@ -417,32 +455,46 @@ export class Spaceship {
         const CYCLE = 0.8;
         let bias = Math.sin((time * 0.001) % CYCLE / CYCLE * Math.PI * 2);
 
-        let baseAlpha = 0.5 + 0.1 * bias;
+        let baseAlpha = Spaceship.SHIELD_BASE_ALPHA + 0.1 * bias;
         let ratio = 0;
 
         switch (this.shieldState) {
             case ShieldState.DOWN:
-                this.shieldNode.drawable.visible = false;
+                ratio = 0;
                 break;
             case ShieldState.DOWN_to_UP:
-                this.shieldNode.drawable.visible = true;
                 ratio = 1 - this.shieldStateTimer / Spaceship.SHIELD_DOWN2UP_TIME;
                 break;
             case ShieldState.UP:
-                this.shieldNode.drawable.visible = true;
                 ratio = 1;
-                break;
-            case ShieldState.UP_to_DOWN:
-                this.shieldNode.drawable.visible = true;
-                ratio = this.shieldStateTimer / Spaceship.SHIELD_DOWN2UP_TIME;
                 break;
         }
 
-        (this.shieldNode.drawable.zdog as Ellipse).color = generateShieldColor(baseAlpha * ratio);
+        (this.shield1Node.drawable.zdog as Ellipse).color = generateShieldColor(baseAlpha * ratio);
     }
     breakShield() {
-        this.shieldState = ShieldState.UP_to_DOWN;
-        this.shieldStateTimer = Spaceship.SHIELD_UP2DOWN_TIME;
+        this.shieldState = ShieldState.DOWN;
+        this.shieldStateTimer = Spaceship.SHIELD_REGEN_TIME;
+
+        let bias = Math.PI * 2 * Math.random();
+        for (let i = 0; i < Spaceship.SHIELD_PIECE_COUNT; i++) {
+            this.shield2Node.particle.spawn(bias + Math.PI * 2 * i / Spaceship.SHIELD_PIECE_COUNT);
+        }
+    }
+    private initShieldPiece(p: Particle, animations: Animation[], rad: number) {
+        let moveAnimation = animations[0] as AnimateAdd;
+        let dx = Math.cos(rad);
+        let dy = Math.sin(rad);
+        let radius = Spaceship.SHIELD_RADIUS;
+        p.node.position.setVec3(this.position.add(new Vec3(dx * radius, dy * radius, 0)));
+        p.node.rotation.z = rad;
+        p.node.scale.set(1, 1, 1);
+        (p.node.drawable.zdog as Rect).color = (this.shield1Node.drawable.zdog as Ellipse).color;
+
+        let r1 = dx * 2 + Math.random() * 1.5;
+        let r2 = dy * 2 + Math.random() * 1.5;
+        let speed = moveAnimation.speed = new Vec3();
+        speed.setVec3(this.speed.add(new Vec3(r1, r2, 0)));
     }
 
     private explosionParticleCount = 20;
@@ -507,11 +559,11 @@ export class Spaceship {
         })).setData(this);
     }
     getShieldShape() {
-        return new Circle2d(new Point2d(this.position.x, this.position.y), 4.5);
+        return new Circle2d(new Point2d(this.position.x, this.position.y), Spaceship.SHIELD_RADIUS);
     }
     getBulletShapes(): Linesegment2d[] {
         let particles = this.bulletNode.particle.getParticles();
-        return particles.filter(p => p.keepAlive).map(particle => {
+        return particles.map(particle => {
             let p = particle.node.position;
             let p1 = new Vec3(0, 0.5, 0).rotateZ(-particle.node.rotation.z).add(p);
             let p2 = new Vec3(0, -0.5, 0).rotateZ(-particle.node.rotation.z).add(p);
