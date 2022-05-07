@@ -5,7 +5,9 @@ import { Vec3 } from '../engine/util/Vec3';
 import { Particle } from '../engine/components/ParticleSystem';
 import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
 import { Layer } from './Layer';
-import { Linesegment2d, Point2d, Polygon2d } from '../engine/components/Collision';
+import { Circle2d, Linesegment2d, Point2d, Polygon2d } from '../engine/components/Collision';
+import { Ellipse } from 'zdog';
+import { now } from '../engine/Renderer';
 
 interface SpaceshipType {
     color: string,
@@ -14,6 +16,13 @@ interface SpaceshipType {
 export enum SpaceshipOwner {
     player = 'player',
     enemy = 'enemy',
+}
+
+enum ShieldState {
+    DOWN,
+    DOWN_to_UP,
+    UP,
+    UP_to_DOWN,
 }
 
 const SPACESHIP_TYPES: { [key: string]: SpaceshipType } = {
@@ -25,12 +34,19 @@ const SPACESHIP_TYPES: { [key: string]: SpaceshipType } = {
     },
 };
 
+const SHIELD_COLOR: Vec3 = new Vec3(0, 255, 234);
+
+function generateShieldColor(alpha: number) {
+    return `rgba(${SHIELD_COLOR.x}, ${SHIELD_COLOR.y}, ${SHIELD_COLOR.z}, ${alpha})`;
+}
+
 const polygon = [
-    {x: 0, y: -1, z: 0},
-    {x: -2, y: -2, z: 0},
-    {x: 0, y: 3, z: 0},
-    {x: 2, y: -2, z: 0},
+    {x: 0, y: -1.2, z: 0},
+    {x: -2, y: -2.2, z: 0},
+    {x: 0, y: 2.8, z: 0},
+    {x: 2, y: -2.2, z: 0},
 ];
+
 function generateShape(color: string): DrawableAsset {
     return {
         shape: 'polyline',
@@ -45,6 +61,7 @@ export class Spaceship {
 
     public readonly node: SceneNode;
     public readonly shipNode: SceneNode;
+    public readonly shieldNode: SceneNode;
     public readonly bulletNode: SceneNode;
     public readonly bubbleNode: SceneNode;
     public readonly explosionNode: SceneNode;
@@ -65,6 +82,19 @@ export class Spaceship {
                 baseFolder: 'assets/sound/',
             },
         });
+
+        if (spaceshipOwner === SpaceshipOwner.player) {
+            this.shieldNode = new SceneNode('shield', {
+                drawable: {
+                    asset: {
+                        shape: 'ellipse',
+                        diameter: 9,
+                        stroke: 0.3,
+                        color: generateShieldColor(0.8),
+                    },
+                },
+            });
+        }
 
         this.bulletNode = new SceneNode('bullet', {
             particle: {
@@ -171,6 +201,7 @@ export class Spaceship {
         switch (spaceshipOwner) {
             case SpaceshipOwner.player:
                 this.shipNode.position.z = Layer.player;
+                this.shieldNode.position.z = Layer.player;
                 this.bulletNode.position.z = Layer.player_bullet;
                 this.bubbleNode.position.z = Layer.player_bubble;
                 this.explosionNode.position.z = Layer.player_explosion;
@@ -181,10 +212,10 @@ export class Spaceship {
                 this.bubbleNode.position.z = Layer.enemy_bubble;
                 this.explosionNode.position.z = Layer.enemy_explosion;
                 break;
-
         }
 
         parent.addChild(this.node);
+        if (this.shieldNode) this.shipNode.addChild(this.shieldNode);
         this.node.addChild(this.shipNode);
         this.node.addChild(this.bulletNode);
         this.node.addChild(this.bubbleNode);
@@ -299,6 +330,9 @@ export class Spaceship {
 
         this.shipNode.position.setVec3(this.position);
         this.shipNode.rotation.z = -this.rot;
+
+        this.shieldState = ShieldState.UP;
+        this.shieldStateTimer = 0;
     }
     disable() {
         this.position.set(-10000, -10000, 0);
@@ -347,6 +381,68 @@ export class Spaceship {
         speed.setVec3(speed.add(this.speed));
 
         p.data = this;
+    }
+
+    private shieldState: ShieldState = ShieldState.UP;
+    private shieldStateTimer: number = 0;
+    private static readonly SHIELD_REGEN_TIME = 3;
+    private static readonly SHIELD_UP2DOWN_TIME = 0.1;
+    private static readonly SHIELD_DOWN2UP_TIME = 0.1;
+    isShieldUp(): boolean {
+        return this.shieldState === ShieldState.UP;
+    }
+    updateShield(dt: number): void {
+        this.shieldStateTimer -= dt;
+        while (this.shieldStateTimer < 0) {
+            switch (this.shieldState) { //find next state
+                case ShieldState.DOWN:
+                    this.shieldState = ShieldState.DOWN_to_UP;
+                    this.shieldStateTimer += Spaceship.SHIELD_DOWN2UP_TIME;
+                    break;
+                case ShieldState.DOWN_to_UP:
+                    this.shieldState = ShieldState.UP;
+                    this.shieldStateTimer = 0;
+                    break;
+                case ShieldState.UP:
+                    this.shieldStateTimer = 0;
+                    break;
+                case ShieldState.UP_to_DOWN:
+                    this.shieldState = ShieldState.DOWN;
+                    this.shieldStateTimer += Spaceship.SHIELD_REGEN_TIME;
+                    break;
+            }
+        }
+
+        let time = now();
+        const CYCLE = 0.8;
+        let bias = Math.sin((time * 0.001) % CYCLE / CYCLE * Math.PI * 2);
+
+        let baseAlpha = 0.5 + 0.1 * bias;
+        let ratio = 0;
+
+        switch (this.shieldState) {
+            case ShieldState.DOWN:
+                this.shieldNode.drawable.visible = false;
+                break;
+            case ShieldState.DOWN_to_UP:
+                this.shieldNode.drawable.visible = true;
+                ratio = 1 - this.shieldStateTimer / Spaceship.SHIELD_DOWN2UP_TIME;
+                break;
+            case ShieldState.UP:
+                this.shieldNode.drawable.visible = true;
+                ratio = 1;
+                break;
+            case ShieldState.UP_to_DOWN:
+                this.shieldNode.drawable.visible = true;
+                ratio = this.shieldStateTimer / Spaceship.SHIELD_DOWN2UP_TIME;
+                break;
+        }
+
+        (this.shieldNode.drawable.zdog as Ellipse).color = generateShieldColor(baseAlpha * ratio);
+    }
+    breakShield() {
+        this.shieldState = ShieldState.UP_to_DOWN;
+        this.shieldStateTimer = Spaceship.SHIELD_UP2DOWN_TIME;
     }
 
     private explosionParticleCount = 20;
@@ -404,15 +500,18 @@ export class Spaceship {
         speed.setVec3(speed.add(this.speed));
     }
 
-    getPolygon2d(): Polygon2d {
+    getShipShape(): Polygon2d {
         return new Polygon2d(polygon.map(point => {
             let p = this.transformToWorld(new Vec3(point.x, point.y, point.z));
             return new Point2d(p.x, p.y);
         })).setData(this);
     }
-    getBulletLinesegment2d(): Linesegment2d[] {
+    getShieldShape() {
+        return new Circle2d(new Point2d(this.position.x, this.position.y), 4.5);
+    }
+    getBulletShapes(): Linesegment2d[] {
         let particles = this.bulletNode.particle.getParticles();
-        return particles.map(particle => {
+        return particles.filter(p => p.keepAlive).map(particle => {
             let p = particle.node.position;
             let p1 = new Vec3(0, 0.5, 0).rotateZ(-particle.node.rotation.z).add(p);
             let p2 = new Vec3(0, -0.5, 0).rotateZ(-particle.node.rotation.z).add(p);

@@ -65,6 +65,9 @@ const insideFunctions: { [key: string]: { [key: string]: { flip?: boolean, func:
         'point': {func: point_polygon_inside, flip: true},
         'linesegment': {func: linesegment_polygon_inside, flip: true},
     },
+    'circle': {
+        'point': {func: point_circle_inside, flip: true},
+    },
 };
 
 const testFunctions: { [key: string]: { [key: string]: { flip?: boolean, func: TestFunction } } } = {

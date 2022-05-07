@@ -23,7 +23,7 @@ let defaultRendererOptions: RendererOptions = {
     postRender: undefined,
 };
 
-function now() {
+export function now() {
     return (typeof performance === 'undefined' ? Date : performance).now(); // see threejs clock.js
 }
 

@@ -3,7 +3,7 @@ import { UserInput } from '../engine/UserInput';
 import { Scene } from '../engine/scene/Scene';
 import { Vec3 } from '../engine/util/Vec3';
 import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
-import { Collision2d } from '../engine/components/Collision';
+import { Collision2d, Point2d } from '../engine/components/Collision';
 import { Particle } from '../engine/components/ParticleSystem';
 import { Bgm, BgmParam } from '../engine/Bgm';
 import { EnemyAi } from './Ai';
@@ -191,6 +191,7 @@ export class Level {
             if (pressed[' ']) {
                 player.spaceship.tryFire(true);
             }
+            player.spaceship.updateShield(dt);
         }
 
         for (let enemy of this.state.enemies) {
@@ -267,12 +268,12 @@ export class Level {
 
     private testPlayerBullets() {
         let player = this.state.player;
-        let bullets = player.spaceship.getBulletLinesegment2d();
+        let bullets = player.spaceship.getBulletShapes();
         if (bullets.length === 0) return;
 
         let enemies = this.state.enemies.filter(i => i.enabled);
         for (let enemy of enemies) {
-            let enemyShape = enemy.spaceship.getPolygon2d();
+            let enemyShape = enemy.spaceship.getShipShape();
 
             let insideResult = Collision2d.inside(enemyShape, ...bullets);
             let anyInside = insideResult.length > 0;
@@ -304,11 +305,32 @@ export class Level {
     }
 
     private testEnemyBullets() {
-        let bulletLists = this.state.enemies.map(enemy => enemy.spaceship.getBulletLinesegment2d());
+        let bulletLists = this.state.enemies.map(enemy => enemy.spaceship.getBulletShapes());
         let bullets = bulletLists.reduce((acc, val) => acc.concat(val), []);
 
         let player = this.state.player;
-        let playerShape = player.spaceship.getPolygon2d();
+
+        // test shield
+        if (player.spaceship.isShieldUp()) {
+            let shieldShape = player.spaceship.getShieldShape();
+            let bulletCenters = bullets.map(l => {
+                let point = new Point2d((l.point1.x + l.point1.x) * 0.5, (l.point1.y + l.point1.y) * 0.5);
+                point.data = l.data;
+                return point;
+            });
+            let shieldResult = Collision2d.inside(shieldShape, ...bulletCenters);
+            if (shieldResult.length) {
+                for (let r of shieldResult) {
+                    if (r.shape1.data && Array.isArray(r.shape1.data)) {
+                        (r.shape1.data[1] as Particle).keepAlive = false;
+                    }
+                }
+                player.spaceship.breakShield();
+                return;
+            }
+        }
+
+        let playerShape = player.spaceship.getShipShape();
 
         let insideResult = Collision2d.inside(playerShape, ...bullets);
         let anyInside = insideResult.length > 0;
@@ -350,6 +372,7 @@ export class Level {
         this.state.player.spaceship.keepInScreen = true;
         this.state.player.enabled = true;
 
+        //TODO clear all particles
         for (let enemy of this.state.enemies) {
             enemy.spaceship.disable();
             enemy.enabled = false;
