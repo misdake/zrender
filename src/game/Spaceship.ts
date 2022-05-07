@@ -67,6 +67,7 @@ export class Spaceship {
     public readonly explosionNode: SceneNode;
 
     private static readonly SFX_ASSETS = {fire: 'fire.ogg', explosion: 'explosion.ogg', engine: 'engine.ogg'};
+    private static readonly SFX_ASSETS_SHIELD = {up: 'shield_up.ogg', down: 'shield_down.ogg'};
 
     constructor(parent: SceneNode, spaceshipOwner: SpaceshipOwner) {
         let spaceshipType = SPACESHIP_TYPES[spaceshipOwner];
@@ -95,6 +96,11 @@ export class Spaceship {
                 },
             });
             this.shield2Node = new SceneNode('shield pieces', {
+                sfx: {
+                    assets: Spaceship.SFX_ASSETS_SHIELD,
+                    channel: 3,
+                    baseFolder: 'assets/sound/',
+                },
                 particle: {
                     particleName: 'shield pieces',
                     drawable: {
@@ -427,11 +433,11 @@ export class Spaceship {
     private static readonly SHIELD_STROKE = 0.3;
     private static readonly SHIELD_REGEN_TIME = 5;
     private static readonly SHIELD_UP2DOWN_TIME = 0.4;
-    private static readonly SHIELD_DOWN2UP_TIME = 0.2;
+    private static readonly SHIELD_DOWN2UP_TIME = 0.5;
     private static readonly SHIELD_BASE_ALPHA = 0.5;
     private static readonly SHIELD_PIECE_COUNT = 29;
     isShieldUp(): boolean {
-        return this.shieldState === ShieldState.UP;
+        return this.shieldState === ShieldState.UP || this.shieldState === ShieldState.DOWN_to_UP;
     }
     updateShield(dt: number): void {
         this.shieldStateTimer -= dt;
@@ -440,6 +446,7 @@ export class Spaceship {
                 case ShieldState.DOWN:
                     this.shieldState = ShieldState.DOWN_to_UP;
                     this.shieldStateTimer += Spaceship.SHIELD_DOWN2UP_TIME;
+                    this.shield2Node.sfx.play(Spaceship.SFX_ASSETS_SHIELD.up, 0.5, false);
                     break;
                 case ShieldState.DOWN_to_UP:
                     this.shieldState = ShieldState.UP;
@@ -480,6 +487,7 @@ export class Spaceship {
         for (let i = 0; i < Spaceship.SHIELD_PIECE_COUNT; i++) {
             this.shield2Node.particle.spawn(bias + Math.PI * 2 * i / Spaceship.SHIELD_PIECE_COUNT);
         }
+        this.shield2Node.sfx.play(Spaceship.SFX_ASSETS_SHIELD.down, 0.5, false);
     }
     private initShieldPiece(p: Particle, animations: Animation[], rad: number) {
         let moveAnimation = animations[0] as AnimateAdd;

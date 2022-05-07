@@ -129,7 +129,7 @@ export class Level {
     public readonly globalState: GameStateGlobal;
     public readonly state = new GameStateLevel();
 
-    private readonly ENEMY_MAX = 5;
+    private readonly ENEMY_MAX = 1;
 
     constructor(globalState: GameStateGlobal) {
         this.globalState = globalState;
