@@ -91,7 +91,7 @@ export class Spaceship {
                         shape: 'ellipse',
                         diameter: Spaceship.SHIELD_RADIUS * 2,
                         stroke: Spaceship.SHIELD_STROKE,
-                        color: generateShieldColor(Spaceship.SHIELD_BASE_ALPHA),
+                        color: generateShieldColor(0),
                     },
                 },
             });
@@ -375,8 +375,8 @@ export class Spaceship {
         this.shipNode.position.setVec3(this.position);
         this.shipNode.rotation.z = -this.rot;
 
-        this.shieldState = ShieldState.UP;
-        this.shieldStateTimer = 0;
+        this.shieldState = ShieldState.DOWN;
+        this.shieldStateTimer = Spaceship.SHIELD_REGEN_TIME;
     }
     disable() {
         this.position.set(-10000, -10000, 0);
@@ -427,11 +427,11 @@ export class Spaceship {
         p.data = this;
     }
 
-    private shieldState: ShieldState = ShieldState.UP;
-    private shieldStateTimer: number = 0;
+    private shieldState: ShieldState = ShieldState.DOWN;
+    private shieldStateTimer: number = Spaceship.SHIELD_REGEN_TIME;
     private static readonly SHIELD_RADIUS = 4.5;
     private static readonly SHIELD_STROKE = 0.3;
-    private static readonly SHIELD_REGEN_TIME = 5;
+    private static readonly SHIELD_REGEN_TIME = 7;
     private static readonly SHIELD_UP2DOWN_TIME = 0.4;
     private static readonly SHIELD_DOWN2UP_TIME = 0.5;
     private static readonly SHIELD_BASE_ALPHA = 0.5;
