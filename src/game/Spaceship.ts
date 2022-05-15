@@ -166,9 +166,9 @@ export class Spaceship {
             p => isInScreen(p.node.position, 2),
         );
 
-        this.bubbleNode = new SceneNode('bullet', {
+        this.bubbleNode = new SceneNode('bubble', {
             particle: {
-                particleName: 'bullet',
+                particleName: 'bubble',
                 drawable: {
                     asset: {
                         shape: 'cone',

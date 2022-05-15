@@ -1,7 +1,7 @@
 import { Scene } from '../engine/scene/Scene';
 import { Renderer } from '../engine/Renderer';
 import { rendererOptions } from './Config';
-import { GameLogic, GameStateGlobal, Level } from './GameLogic';
+import { GameLogic, GameStateGlobal } from './GameLogic';
 
 async function start() {
     let container = document.getElementById('container') as HTMLDivElement;
@@ -23,8 +23,11 @@ async function start() {
     renderer.postRender = (context, width, height) => {
         gameLogic.postRender(context, width, height);
     };
+
+    (window as any).printSceneTree = () => {
+        scene.printSceneTree();
+    };
 }
 
 //TODO click or press to start
 setTimeout(() => start());
-

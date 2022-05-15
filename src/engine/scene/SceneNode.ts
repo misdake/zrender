@@ -5,7 +5,10 @@ import { EventDispatcher } from '../util/EventDispatcher';
 import { Vec3 } from '../util/Vec3';
 import { ParticleSystem } from '../components/ParticleSystem';
 
+let idNext = 1;
+
 export class SceneNode extends EventDispatcher {
+    public readonly id: number;
     public readonly name: string;
     private parent: SceneNode;
     private readonly children: SceneNode[];
@@ -20,6 +23,7 @@ export class SceneNode extends EventDispatcher {
 
     constructor(name?: string, components?: ComponentParam) {
         super();
+        this.id = idNext++;
 
         this.name = name || '';
         this.children = []; //TODO add parent control
@@ -51,6 +55,9 @@ export class SceneNode extends EventDispatcher {
 
     getParent(): SceneNode {
         return this.parent;
+    }
+    getChildren() : Readonly<SceneNode[]> {
+        return this.children;
     }
 
     updateDrawableSelf(force: boolean = false) {
