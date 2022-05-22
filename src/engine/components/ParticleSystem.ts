@@ -2,20 +2,19 @@ import { Component } from './Component';
 import { DrawableParam } from './Drawable';
 import { Vec3 } from '../util/Vec3';
 import { SceneNode } from '../scene/SceneNode';
-import { animate, Animation } from './Animation';
+import { animationUpdate, Animation, animationInit, AnimationAsset, animationFillSrc } from './Animation';
 
 export interface ParticleParam {
     particleName: string,
     drawable: DrawableParam;
     spawnParent?: SceneNode;
-    animations: Animation[];
+    animations: AnimationAsset[];
 }
 
 export class Particle {
     readonly node: SceneNode;
     data: any;
 
-    animationSrc: Vec3[];
     animations: Animation[];
     time: number;
 
@@ -27,21 +26,16 @@ export class Particle {
         });
     }
 
-    spawn(initFunc: (p: Particle, animations: Animation[], payload?: any) => void, animations: Animation[], payload?: any) {
+    spawn(initFunc: (p: Particle, animations: AnimationAsset[], payload?: any) => void, animationAssets: AnimationAsset[], payload?: any) {
         this.time = 0;
-        this.animations = animations;
-        initFunc(this, animations, payload);
-
-        this.animationSrc = [];
-        for (let animation of this.animations) {
-            let src: Vec3 = this.node[animation.field];
-            this.animationSrc.push(new Vec3(src.x, src.y, src.z));
-        }
+        this.animations = animationInit(this.node, animationAssets);
+        initFunc(this, this.animations, payload);
+        animationFillSrc(this.node, this.animations);
     }
 
     update(dt: number) {
         this.time += dt;
-        this.keepAlive = animate(this.node, this.animations, this.animationSrc, this.time);
+        this.keepAlive = animationUpdate(this.node, this.animations, this.time);
     }
 
     check(checkEnable: (p: Particle) => boolean): boolean {
@@ -59,14 +53,14 @@ export class ParticleSystem extends Component {
     public readonly particleName: string;
     public readonly drawable: DrawableParam;
     public readonly spawnParent: SceneNode;
-    public readonly animations: Animation[];
+    public readonly animationAssets: AnimationAsset[];
 
     constructor(node: SceneNode, param: ParticleParam) {
         super(node);
 
         this.particleName = param.particleName;
         this.drawable = param.drawable;
-        this.animations = param.animations;
+        this.animationAssets = param.animations;
 
         if (param.spawnParent) {
             this.spawnParent = param.spawnParent;
@@ -86,8 +80,7 @@ export class ParticleSystem extends Component {
         }
         this.enabled.push(particle);
 
-        let particleAnimations = this.animations.map(a => Object.assign({}, a));
-        particle.spawn(this.initFunc, particleAnimations, payload);
+        particle.spawn(this.initFunc, this.animationAssets, payload);
         particle.update(0);
     }
 

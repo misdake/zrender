@@ -1,3 +1,14 @@
+export enum Vec3Mask {
+    None = 0,
+    X = 1,
+    Y = 2,
+    Z = 4,
+    XY = 3,
+    XZ = 5,
+    YZ = 6,
+    XYZ = 7,
+}
+
 export class Vec3 {
     private _x: number;
     private _y: number;
@@ -25,6 +36,16 @@ export class Vec3 {
     }
     setVec3(other: Vec3) {
         this.set(other._x, other._y, other._z);
+    }
+
+    setWithMask(x: number, y: number, z: number, mask: Vec3Mask) {
+        if (mask & Vec3Mask.X) this._x = x;
+        if (mask & Vec3Mask.Y) this._y = y;
+        if (mask & Vec3Mask.Z) this._z = z;
+        if (mask > 0) this.dirty = true;
+    }
+    setVec3WithMask(other: Vec3, mask: Vec3Mask) {
+        this.setWithMask(other._x, other._y, other._z, mask);
     }
 
     get z(): number {

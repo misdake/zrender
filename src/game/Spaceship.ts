@@ -1,5 +1,5 @@
 import { DrawableAsset } from '../engine/components/Drawable';
-import { AnimateAdd, Animation } from '../engine/components/Animation';
+import { AnimateType, Animation, AnimationAdd } from '../engine/components/Animation';
 import { SceneNode } from '../engine/scene/SceneNode';
 import { Vec3 } from '../engine/util/Vec3';
 import { Particle } from '../engine/components/ParticleSystem';
@@ -115,13 +115,13 @@ export class Spaceship {
                     },
                     animations: [{
                         name: 'move',
-                        type: 'add',
+                        type: AnimateType.add,
                         field: 'position',
                         duration: Spaceship.SHIELD_UP2DOWN_TIME,
                         speed: null, //filled in initBullet
                     }, {
                         name: 'scale',
-                        type: 'lerp',
+                        type: AnimateType.lerp,
                         field: 'scale',
                         duration: Spaceship.SHIELD_UP2DOWN_TIME,
                         target: new Vec3(0, 0.8, 0),
@@ -149,7 +149,7 @@ export class Spaceship {
                 },
                 animations: [{
                     name: 'fire',
-                    type: 'add',
+                    type: AnimateType.add,
                     field: 'position',
                     duration: 10000,
                     speed: null, //filled in initBullet
@@ -181,13 +181,13 @@ export class Spaceship {
                 },
                 animations: [{
                     name: 'scale',
-                    type: 'lerp',
+                    type: AnimateType.lerp,
                     field: 'scale',
                     duration: 0.5,
                     target: new Vec3(0, 0, 0),
                 }, {
                     name: 'move',
-                    type: 'add',
+                    type: AnimateType.add,
                     field: 'position',
                     duration: 0.5,
                     speed: null,
@@ -213,13 +213,13 @@ export class Spaceship {
                 },
                 animations: [{
                     name: 'scale',
-                    type: 'lerp',
+                    type: AnimateType.lerp,
                     field: 'scale',
                     duration: 0.5,
                     target: new Vec3(0, 0, 0),
                 }, {
                     name: 'move',
-                    type: 'add',
+                    type: AnimateType.add,
                     field: 'position',
                     duration: 0.5,
                     speed: null,
@@ -414,7 +414,7 @@ export class Spaceship {
         this.bulletNode.particle.spawn();
     }
     private initBullet(p: Particle, animations: Animation[]) {
-        let moveAnimation = animations[0] as AnimateAdd;
+        let moveAnimation = animations[0] as AnimationAdd;
         p.node.position.setVec3(this.position.add(this.rotateLocal(new Vec3(0, 3, 0))));
         p.node.rotation.z = -this.rot;
 
@@ -490,7 +490,7 @@ export class Spaceship {
         this.shield2Node.sfx.play(Spaceship.SFX_ASSETS_SHIELD.down, 0.5, false);
     }
     private initShieldPiece(p: Particle, animations: Animation[], rad: number) {
-        let moveAnimation = animations[0] as AnimateAdd;
+        let moveAnimation = animations[0] as AnimationAdd;
         let dx = Math.cos(rad);
         let dy = Math.sin(rad);
         let radius = Spaceship.SHIELD_RADIUS;
@@ -514,7 +514,7 @@ export class Spaceship {
         this.explosionNode.sfx.play(Spaceship.SFX_ASSETS.explosion, 0.6);
     }
     private initExplosion(p: Particle, animations: Animation[], explosionPoint: Vec3) {
-        let moveAnimation = animations[1] as AnimateAdd;
+        let moveAnimation = animations[1] as AnimationAdd;
         let direction = Math.random() * Math.PI * 2;
         let nx = Math.cos(direction);
         let ny = Math.sin(direction);
@@ -554,7 +554,7 @@ export class Spaceship {
         p.node.scale.set(size, size, size);
         p.node.rotation.set(Math.PI / 2, this.rot, 0);
 
-        let moveAnimation = animations[1] as AnimateAdd;
+        let moveAnimation = animations[1] as AnimationAdd;
         let speed = moveAnimation.speed = new Vec3();
         speed.setVec3(this.rotateLocal(this.bubbleSpeedDelta));
         speed.setVec3(speed.add(this.speed));
