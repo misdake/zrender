@@ -39,10 +39,16 @@ export class Vec3 {
     }
 
     setWithMask(x: number, y: number, z: number, mask: Vec3Mask) {
-        if (mask & Vec3Mask.X) this._x = x;
-        if (mask & Vec3Mask.Y) this._y = y;
-        if (mask & Vec3Mask.Z) this._z = z;
         if (mask > 0) this.dirty = true;
+        if (mask === Vec3Mask.XYZ) {
+            this._x = x;
+            this._y = y;
+            this._z = z;
+        } else {
+            if ((mask & Vec3Mask.X) > 0) this._x = x;
+            if ((mask & Vec3Mask.Y) > 0) this._y = y;
+            if ((mask & Vec3Mask.Z) > 0) this._z = z;
+        }
     }
     setVec3WithMask(other: Vec3, mask: Vec3Mask) {
         this.setWithMask(other._x, other._y, other._z, mask);
