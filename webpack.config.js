@@ -3,8 +3,10 @@ const path = require('path');
 module.exports = env => {
     let devtool = env && env.production ? undefined : "source-map";
     let mode = env && env.production ? 'production' : 'development';
+    let open_page = env && env.open_page ? env.open_page : "index.html";
+    let entry_file = env && env.entry_file ? env.entry_file : "./src/game/game.ts";
     return {
-        entry: './src/app.ts',
+        entry: entry_file,
         devtool: devtool,
         mode: mode,
         module: {
@@ -29,7 +31,7 @@ module.exports = env => {
             static: {
                 directory: path.join(__dirname, 'dist'),
             },
-            open: true,
+            open: open_page,
             hot: true,
             compress: true,
             port: 9000

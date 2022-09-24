@@ -8,6 +8,7 @@
     "url": "git+https://github.com/misdake/zrender.git"
   },
   "scripts": {
+    "feature": "node webpack.start.js entry_file=./src/app.ts",
     "build": "webpack --env production",
     "dev": "node webpack.start.js",
     "test": "mocha -r ts-node/register src/tests/**/*.test.ts"

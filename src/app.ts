@@ -1,1 +1,3 @@
-import './game/game';
+// import './game/game';
+
+console.log("app!");
