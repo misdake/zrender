@@ -8,7 +8,7 @@ export function zdogReplaceChild(parent: Anchor, child: Anchor, replacement: Anc
     let p = parent as any as AnchorHack;
 
     let index = p.children.indexOf(child);
-    if (index != -1) {
+    if (index !== -1) {
         p.children.splice(index, 1, replacement);
     } else {
         console.error('cannot find child', parent, child);
