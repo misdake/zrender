@@ -5,7 +5,7 @@ import { Component } from './Component';
 import { Vec3 } from '../util/Vec3';
 import { zdogReplaceChild } from '../util/zdogHack';
 
-export type DrawableAsset = ShapeParam
+export type DrawableAsset = ShapeParam;
 
 export interface DrawableParam {
     asset: DrawableAsset;

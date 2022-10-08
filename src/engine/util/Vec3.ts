@@ -1,15 +1,55 @@
-export enum Vec3Mask {
-    None = 0,
-    X = 1,
-    Y = 2,
-    Z = 4,
-    XY = 3,
-    XZ = 5,
-    YZ = 6,
-    XYZ = 7,
+import { AnimateFieldData, AnimateFieldDataType } from '../components/Animation';
+
+export class Vec1 implements AnimateFieldData {
+    private _x: number;
+
+    private dirty: boolean;
+    public isDirty(): boolean {
+        return this.dirty;
+    }
+    public clearDirty(): boolean {
+        let dirty = this.dirty;
+        this.dirty = false;
+        return dirty;
+    }
+
+    constructor(x: number = 0) {
+        this._x = x;
+    }
+
+    set(x: number) {
+        this._x = x;
+        this.dirty = true;
+    }
+
+    get x(): number {
+        return this._x;
+    }
+    set x(value: number) {
+        this._x = value;
+        this.dirty = true;
+    }
+
+
+    get_type(): AnimateFieldDataType {
+        return AnimateFieldDataType.Vec1;
+    }
+    set_self(v: AnimateFieldData): void {
+        this.set((v as Vec1)._x);
+    }
+    add_self(b: AnimateFieldData): AnimateFieldData {
+        let b1 = b as Vec1;
+        return new Vec1(this._x + b1._x);
+    }
+    mul_scalar(s: number): AnimateFieldData {
+        return new Vec1(this._x  * s);
+    }
+    clone(): AnimateFieldData {
+        return new Vec1(this._x);
+    }
 }
 
-export class Vec3 {
+export class Vec3 implements AnimateFieldData {
     private _x: number;
     private _y: number;
     private _z: number;
@@ -28,6 +68,25 @@ export class Vec3 {
         this.set(x, y, z);
     }
 
+    get_type(): AnimateFieldDataType {
+        return AnimateFieldDataType.Vec3;
+    }
+    set_self(v: AnimateFieldData): void {
+        this.setVec3(v as Vec3);
+    }
+    add(other: Vec3): Vec3 {
+        return new Vec3(this._x + other._x, this._y + other._y, this._z + other._z);
+    }
+    add_self(other: AnimateFieldData): AnimateFieldData {
+        return this.add(other as Vec3);
+    }
+    mul_scalar(n: number): Vec3 {
+        return new Vec3(this._x * n, this._y * n, this._z * n);
+    }
+    clone(): AnimateFieldData {
+        return new Vec3(this._x, this._y, this._z);
+    }
+
     set(x: number, y: number, z: number) {
         this._x = x;
         this._y = y;
@@ -36,22 +95,6 @@ export class Vec3 {
     }
     setVec3(other: Vec3) {
         this.set(other._x, other._y, other._z);
-    }
-
-    setWithMask(x: number, y: number, z: number, mask: Vec3Mask) {
-        if (mask > 0) this.dirty = true;
-        if (mask === Vec3Mask.XYZ) {
-            this._x = x;
-            this._y = y;
-            this._z = z;
-        } else {
-            if ((mask & Vec3Mask.X) > 0) this._x = x;
-            if ((mask & Vec3Mask.Y) > 0) this._y = y;
-            if ((mask & Vec3Mask.Z) > 0) this._z = z;
-        }
-    }
-    setVec3WithMask(other: Vec3, mask: Vec3Mask) {
-        this.setWithMask(other._x, other._y, other._z, mask);
     }
 
     get z(): number {
@@ -94,13 +137,6 @@ export class Vec3 {
         } else {
             this.set(0, 0, 0);
         }
-    }
-
-    add(other: Vec3): Vec3 {
-        return new Vec3(this._x + other._x, this._y + other._y, this._z + other._z);
-    }
-    multiplyScalar(n: number): Vec3 {
-        return new Vec3(this._x * n, this._y * n, this._z * n);
     }
 
     rotateZSet(z: number) {

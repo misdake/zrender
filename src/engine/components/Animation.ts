@@ -1,13 +1,32 @@
-import { Vec3, Vec3Mask } from '../util/Vec3';
 import { SceneNode } from '../scene/SceneNode';
 
-type AnimateField = 'position' | 'rotation' | 'scale'; //TODO more: color? opacity?
+export enum AnimateField {
+    Position,
+    Rotation,
+    Scale,
+    Color,
+    Opacity,
+}
+export enum AnimateFieldDataType {
+    Vec3,
+    Vec1,
+}
+export interface AnimateFieldData {
+    mul_scalar(s: number): AnimateFieldData;
+    add_self(b: AnimateFieldData): AnimateFieldData;
 
-type FieldGetter = (node: SceneNode) => { src: Vec3, mask?: Vec3Mask };
+    get_type(): AnimateFieldDataType;
+    set_self(v: AnimateFieldData): void;
+    clone(): AnimateFieldData;
+}
+
+type FieldGetter = (node: SceneNode) => { src: AnimateFieldData };
 const fieldGetter: { [key in AnimateField]: FieldGetter } = {
-    'position': node => ({src: node.position}),
-    'rotation': node => ({src: node.rotation}),
-    'scale': node => ({src: node.scale}),
+    [AnimateField.Position]: node => ({src: node.position}),
+    [AnimateField.Rotation]: node => ({src: node.rotation}),
+    [AnimateField.Scale]: node => ({src: node.scale}),
+    [AnimateField.Color]: node => ({src: node.color}),
+    [AnimateField.Opacity]: node => ({src: node.opacity}),
 };
 
 export enum AnimateType {
@@ -20,33 +39,31 @@ export interface AnimationAssetBase {
     name: string,
     type: AnimateType,
     field: AnimateField,
-    mask?: Vec3Mask,
     // startTime?: number, //TODO support startTime
     duration: number,
-    src?: Vec3,
+    src?: AnimateFieldData,
 }
 
 export interface AnimationBase extends AnimationAssetBase {
-    mask: Vec3Mask,
-    src: Vec3,
+    src: AnimateFieldData,
 }
 
 // Set: value = target
 export interface AnimateAssetSet extends AnimationAssetBase {
     type: AnimateType.set,
-    target: Vec3,
+    target: AnimateFieldData,
 }
 
 // Add: value = src + {speed} * t
 export interface AnimateAssetAdd extends AnimationAssetBase {
     type: AnimateType.add,
-    speed: Vec3,
+    speed: AnimateFieldData,
 }
 
 // Lerp: value = src * (1 - t / {duration}) + {target} * t / {duration}
 export interface AnimateAssetLerp extends AnimationAssetBase {
     type: AnimateType.lerp,
-    target: Vec3,
+    target: AnimateFieldData,
 }
 
 export type AnimationSet = AnimateAssetSet & AnimationBase;
@@ -57,25 +74,19 @@ export type Animation = AnimationSet | AnimationAdd | AnimationLerp;
 export type AnimationAsset = AnimateAssetSet | AnimateAssetAdd | AnimateAssetLerp;
 
 // t is start-calibrated time: [0, duration)
-type AnimateFunction = (result: Vec3, src: Vec3, t: number, animation: AnimationBase) => void;
+type AnimateFunction = (result: AnimateFieldData, src: AnimateFieldData, t: number, animation: AnimationBase) => void;
 
 const animateFunctions: { [key in AnimateType]: AnimateFunction } = {
     'set': (result, _src, _t, animation: AnimationSet) => {
-        result.setVec3WithMask(animation.target, animation.mask);
+        result.set_self(animation.target);
     },
     'add': (result, src, t, animation: AnimationAdd) => {
-        let x = src.x + animation.speed.x * t;
-        let y = src.y + animation.speed.y * t;
-        let z = src.z + animation.speed.z * t;
-        result.setWithMask(x, y, z, animation.mask);
+        result.set_self(src.add_self(animation.speed.mul_scalar(t)));
     },
     'lerp': (result, src, t, animation: AnimationLerp) => {
         let part2 = t / animation.duration;
         let part1 = 1 - part2;
-        let x = src.x * part1 + animation.target.x * part2;
-        let y = src.y * part1 + animation.target.y * part2;
-        let z = src.z * part1 + animation.target.z * part2;
-        result.setWithMask(x, y, z, animation.mask);
+        result.set_self((src.mul_scalar(part1)).add_self(animation.target.mul_scalar(part2)));
     },
 };
 
@@ -88,10 +99,10 @@ export function animationInit(node: SceneNode, animationAssets: AnimationAsset[]
 
 export function animationFillSrc(node: SceneNode, animations: Animation[]): Animation[] {
     for (let animation of animations) {
-        let field = fieldGetter[animation.field](node);
-        animation.mask = (animation.mask ?? Vec3Mask.XYZ) & (field.mask ?? Vec3Mask.XYZ);
-        let src: Vec3 = field.src;
-        if (!animation.src) animation.src = new Vec3(src.x, src.y, src.z);
+        if (!animation.src) {
+            let field = fieldGetter[animation.field](node);
+            animation.src = field.src.clone();
+        }
     }
     return animations;
 }
@@ -101,7 +112,7 @@ export function animationUpdate(node: SceneNode, animations: Animation[], time: 
     for (let i = 0; i < animations.length; i++) {
         let animation = animations[i];
         if (time > animation.duration) continue;
-        let src: Vec3 = animation.src;
+        let src: AnimateFieldData = animation.src;
         let field = fieldGetter[animation.field](node);
         let animateFunction = animateFunctions[animation.type];
         animateFunction(field.src, src, time, animation);

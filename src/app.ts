@@ -1,3 +1,1 @@
-// import './game/game';
-
-console.log("app!");
+import './demos/test_color_opacity';

@@ -1,5 +1,5 @@
 import { DrawableAsset } from '../engine/components/Drawable';
-import { AnimateType, Animation, AnimationAdd } from '../engine/components/Animation';
+import { AnimateField, AnimateType, Animation, AnimationAdd } from '../engine/components/Animation';
 import { SceneNode } from '../engine/scene/SceneNode';
 import { Vec3 } from '../engine/util/Vec3';
 import { Particle } from '../engine/components/ParticleSystem';
@@ -116,13 +116,13 @@ export class Spaceship {
                     animations: [{
                         name: 'move',
                         type: AnimateType.add,
-                        field: 'position',
+                        field: AnimateField.Position,
                         duration: Spaceship.SHIELD_UP2DOWN_TIME,
                         speed: null, //filled in initBullet
                     }, {
                         name: 'scale',
                         type: AnimateType.lerp,
-                        field: 'scale',
+                        field: AnimateField.Scale,
                         duration: Spaceship.SHIELD_UP2DOWN_TIME,
                         target: new Vec3(0, 0.8, 0),
                     }],
@@ -150,7 +150,7 @@ export class Spaceship {
                 animations: [{
                     name: 'fire',
                     type: AnimateType.add,
-                    field: 'position',
+                    field: AnimateField.Position,
                     duration: 10000,
                     speed: null, //filled in initBullet
                 }],
@@ -182,13 +182,13 @@ export class Spaceship {
                 animations: [{
                     name: 'scale',
                     type: AnimateType.lerp,
-                    field: 'scale',
+                    field: AnimateField.Scale,
                     duration: 0.5,
                     target: new Vec3(0, 0, 0),
                 }, {
                     name: 'move',
                     type: AnimateType.add,
-                    field: 'position',
+                    field: AnimateField.Position,
                     duration: 0.5,
                     speed: null,
                 }],
@@ -214,13 +214,13 @@ export class Spaceship {
                 animations: [{
                     name: 'scale',
                     type: AnimateType.lerp,
-                    field: 'scale',
+                    field: AnimateField.Scale,
                     duration: 0.5,
                     target: new Vec3(0, 0, 0),
                 }, {
                     name: 'move',
                     type: AnimateType.add,
-                    field: 'position',
+                    field: AnimateField.Position,
                     duration: 0.5,
                     speed: null,
                 }],
@@ -321,7 +321,7 @@ export class Spaceship {
         speedLen = Math.min(speedLen, this.speedMax);
         this.speed.setLength(speedLen);
 
-        this.position.setVec3(this.position.add(this.speed.multiplyScalar(dt)));
+        this.position.setVec3(this.position.add(this.speed.mul_scalar(dt)));
 
         //fit in screen
         if (this.keepInScreen) {
@@ -522,9 +522,9 @@ export class Spaceship {
 
         p.time = Math.random() * 0.4 - 0.2;
         p.node.scale.set(10, 10, 10);
-        p.node.position.setVec3(explosionPoint.add(this.speed.multiplyScalar(-p.time / 2)));
+        p.node.position.setVec3(explosionPoint.add(this.speed.mul_scalar(-p.time / 2)));
         if (p.time < 0) {
-            p.node.scale.setVec3(p.node.scale.multiplyScalar(1 / (1 - p.time)));
+            p.node.scale.setVec3(p.node.scale.mul_scalar(1 / (1 - p.time)));
         }
 
         let speed = moveAnimation.speed = new Vec3(nx * speedScalar, ny * speedScalar, 0);

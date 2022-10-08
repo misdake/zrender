@@ -2,8 +2,9 @@ import { Drawable } from '../components/Drawable';
 import { ComponentParam } from '../components/ComponentParam';
 import { Sfx } from '../components/Sfx';
 import { EventDispatcher } from '../util/EventDispatcher';
-import { Vec3 } from '../util/Vec3';
+import { Vec1, Vec3 } from '../util/Vec3';
 import { ParticleSystem } from '../components/ParticleSystem';
+import { Shape } from 'zdog';
 
 let idNext = 1;
 
@@ -16,6 +17,8 @@ export class SceneNode extends EventDispatcher {
     public readonly position: Vec3 = new Vec3(0, 0, 0);
     public readonly rotation: Vec3 = new Vec3(0, 0, 0);
     public readonly scale: Vec3 = new Vec3(1, 1, 1);
+    public readonly color: Vec3 = new Vec3(1, 1, 1);
+    public readonly opacity: Vec1 = new Vec1(1);
 
     public readonly drawable: Drawable;
     public readonly sfx?: Sfx;
@@ -27,6 +30,9 @@ export class SceneNode extends EventDispatcher {
 
         this.name = name || '';
         this.children = []; //TODO add parent control
+
+        this.color.clearDirty();
+        this.opacity.clearDirty();
 
         let drawableParam = components && components.drawable;
         if (drawableParam) {
@@ -68,6 +74,12 @@ export class SceneNode extends EventDispatcher {
         let dirty = dirty1 || dirty2 || dirty3;
         if (force || dirty) {
             this.drawable.updateTransform(this.position, this.rotation, this.scale);
+        }
+
+        let dirty4 = this.color.clearDirty();
+        let dirty5 = this.opacity.clearDirty();
+        if (force || dirty4 || dirty5) {
+            (this.drawable.zdog as Shape).color = `rgba(${this.color.x * 255}, ${this.color.y * 255}, ${this.color.z * 255}, ${this.opacity.x})`;
         }
     }
 
