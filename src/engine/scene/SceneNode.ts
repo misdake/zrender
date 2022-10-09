@@ -48,7 +48,7 @@ export class SceneNode extends EventDispatcher {
 
         let particleParam = components && components.particle;
         if (particleParam) {
-            this.particle = new ParticleSystem(this, particleParam);
+            this.particle = particleParam.asset.create(particleParam.paramPayload, this);
         }
     }
 

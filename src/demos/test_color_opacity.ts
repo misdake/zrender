@@ -1,8 +1,9 @@
 import { Scene } from '../engine/scene/Scene';
 import { Renderer, RendererOptions } from '../engine/Renderer';
 import { SceneNode } from '../engine/scene/SceneNode';
-import { AnimateField, AnimateType, AnimationAdd } from '../engine/components/Animation';
-import { Vec3 } from '../engine/util/Vec3';
+import { AnimateField, AnimateType } from '../engine/components/Animation';
+import { Vec1, Vec3 } from '../engine/util/Vec3';
+import { ParticleSystemAsset } from '../engine/components/ParticleSystem';
 
 const rendererOptions: RendererOptions = {
     maxTick: 0.1,
@@ -19,49 +20,8 @@ async function start() {
     scene.root.scale.y = -1;
 
     let node = new SceneNode('ship', {
-        particle: {
-            particleName: 'move',
-            drawable: {
-                asset: {
-                    shape: 'rect',
-                    fill: true,
-                    width: 1,
-                    height: 1,
-                    stroke: false,
-                    color: "rgba(255, 0, 255, 1.0)",
-                },
-            },
-            animations: [{
-                name: 'move',
-                type: AnimateType.add,
-                field: AnimateField.Position,
-                duration: 5,
-                speed: new Vec3(2, 0, 0),
-            }, {
-                name: 'opacity',
-                type: AnimateType.lerp,
-                field: AnimateField.Opacity,
-                duration: 5,
-                target: new Vec3(0, 0, 0), // TODO field to provide info about mask
-            }, {
-                name: 'color',
-                type: AnimateType.lerp,
-                field: AnimateField.Color,
-                duration: 2.5,
-                target: new Vec3(0, 1, 1),
-            }],
-        },
+        particle: {asset: PARTICLE_ASSET, paramPayload: {}},
     });
-    node.particle.setCallbacks(
-        (p, animations, _) => {
-            //TODO auto reset?
-            p.node.position.set(0,0,0);
-            p.node.scale.set(1, 1, 1);
-            p.node.color.set(1, 0, 0);
-            p.node.opacity.set(1);
-        },
-        _ => true,
-    );
 
     let time = 0;
     let last = -1000;
@@ -84,3 +44,40 @@ async function start() {
 
 //TODO click or press to start
 setTimeout(() => start());
+
+const PARTICLE_ASSET = new ParticleSystemAsset<{}, {}>(() => ({
+    particleName: 'move',
+    drawable: {
+        asset: {
+            shape: 'rect',
+            fill: true,
+            width: 1,
+            height: 1,
+            stroke: false,
+            color: 'rgba(255, 0, 255, 1.0)',
+        },
+    },
+    animations: [{
+        name: 'move',
+        type: AnimateType.add,
+        field: AnimateField.Position,
+        duration: 5,
+        src: new Vec3(0, 0, 0),
+        speed: new Vec3(2, 0, 0),
+    }, {
+        name: 'opacity',
+        type: AnimateType.lerp,
+        field: AnimateField.Opacity,
+        duration: 5,
+        src: new Vec1(1),
+        target: new Vec1(0),
+    }, {
+        name: 'color',
+        type: AnimateType.lerp,
+        field: AnimateField.Color,
+        duration: 2.5,
+        src: new Vec3(1, 0, 0),
+        target: new Vec3(0, 1, 1),
+    }],
+}), (p, animations, _) => {
+}, _ => true);

@@ -43,6 +43,24 @@ export class Particle {
     }
 }
 
+export class ParticleSystemAsset<ParamPayload, SpawnPayload> {
+    private readonly paramGen: (payload: ParamPayload) => ParticleParam;
+    private readonly initFunc: (p: Particle, animations: Animation[], payload: SpawnPayload) => void;
+    private readonly checkFunc: (p: Particle) => boolean;
+
+    constructor(paramGen: (payload: ParamPayload) => ParticleParam, initFunc: (p: Particle, animations: Animation[], payload: SpawnPayload) => void, checkFunc: (p: Particle) => boolean) {
+        this.paramGen = paramGen;
+        this.initFunc = initFunc;
+        this.checkFunc = checkFunc;
+    }
+
+    public create(paramPayload: ParamPayload, node: SceneNode): ParticleSystem {
+        let system = new ParticleSystem(node, this.paramGen(paramPayload));
+        system.setCallbacks(this.initFunc, this.checkFunc);
+        return system;
+    }
+}
+
 export class ParticleSystem extends Component {
     private enabled: Particle[] = [];
     private disabled: Particle[] = [];

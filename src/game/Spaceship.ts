@@ -2,7 +2,7 @@ import { DrawableAsset } from '../engine/components/Drawable';
 import { AnimateField, AnimateType, Animation, AnimationAdd } from '../engine/components/Animation';
 import { SceneNode } from '../engine/scene/SceneNode';
 import { Vec3 } from '../engine/util/Vec3';
-import { Particle } from '../engine/components/ParticleSystem';
+import { Particle, ParticleParam, ParticleSystemAsset } from '../engine/components/ParticleSystem';
 import { isInScreen, RENDER_BOTTOM, RENDER_LEFT, RENDER_RIGHT, RENDER_TOP } from './Config';
 import { Layer } from './Layer';
 import { Circle2d, Linesegment2d, Point2d, Polygon2d } from '../engine/components/Collision';
@@ -101,128 +101,31 @@ export class Spaceship {
                     channel: 3,
                     baseFolder: 'assets/sound/',
                 },
-                particle: {
-                    particleName: 'shield pieces',
-                    drawable: {
-                        asset: {
-                            shape: 'rect',
-                            fill: true,
-                            width: Spaceship.SHIELD_STROKE * 2,
-                            height: Spaceship.SHIELD_RADIUS * Math.PI * 2 / Spaceship.SHIELD_PIECE_COUNT,
-                            stroke: false,
-                            color: generateShieldColor(Spaceship.SHIELD_BASE_ALPHA),
-                        },
-                    },
-                    animations: [{
-                        name: 'move',
-                        type: AnimateType.add,
-                        field: AnimateField.Position,
-                        duration: Spaceship.SHIELD_UP2DOWN_TIME,
-                        speed: null, //filled in initBullet
-                    }, {
-                        name: 'scale',
-                        type: AnimateType.lerp,
-                        field: AnimateField.Scale,
-                        duration: Spaceship.SHIELD_UP2DOWN_TIME,
-                        target: new Vec3(0, 0.8, 0),
-                    }],
-                },
+                particle: {asset: SHIELD_PARTICLE_ASSET, paramPayload: spaceshipType},
             });
-            this.shield2Node.particle.setCallbacks(initShieldPiece, _ => true);
         }
 
         this.bulletNode = new SceneNode('bullet', {
-            particle: {
-                particleName: 'bullet',
-                drawable: {
-                    asset: {
-                        shape: 'rect',
-                        fill: true,
-                        width: 0,
-                        height: 1,
-                        stroke: 0.5,
-                        color: spaceshipType.color,
-                    },
-                },
-                animations: [{
-                    name: 'fire',
-                    type: AnimateType.add,
-                    field: AnimateField.Position,
-                    duration: 10000,
-                    speed: null, //filled in initBullet
-                }],
-            },
+            particle: {asset: BULLET_PARTICLE_ASSET, paramPayload: spaceshipType},
             sfx: {
                 assets: Spaceship.SFX_ASSETS,
                 channel: 0,
                 baseFolder: 'assets/sound/',
             },
         });
-        this.bulletNode.particle.setCallbacks(initBullet, p => isInScreen(p.node.position, 2));
 
         this.bubbleNode = new SceneNode('bubble', {
-            particle: {
-                particleName: 'bubble',
-                drawable: {
-                    asset: {
-                        shape: 'cone',
-                        diameter: 0.8,
-                        length: 1.0,
-                        stroke: false,
-                        color: 'rgba(255, 0, 0, 0.6)',
-                        backface: 'rgba(255, 0, 0, 0)',
-                    },
-                },
-                animations: [{
-                    name: 'scale',
-                    type: AnimateType.lerp,
-                    field: AnimateField.Scale,
-                    duration: 0.5,
-                    target: new Vec3(0, 0, 0),
-                }, {
-                    name: 'move',
-                    type: AnimateType.add,
-                    field: AnimateField.Position,
-                    duration: 0.5,
-                    speed: null,
-                }],
-            },
+            particle: {asset: BUBBLE_PARTICLE_ASSET, paramPayload: {}},
         });
-        this.bubbleNode.particle.setCallbacks(initBubble, _ => true);
 
         this.explosionNode = new SceneNode('explosion', {
-            particle: {
-                particleName: 'explosion',
-                drawable: {
-                    asset: {
-                        shape: 'cone',
-                        diameter: 1,
-                        stroke: 0.2,
-                        length: 0,
-                        color: spaceshipType.color.replace('1.0)', '0.2)'),
-                    },
-                },
-                animations: [{
-                    name: 'scale',
-                    type: AnimateType.lerp,
-                    field: AnimateField.Scale,
-                    duration: 0.5,
-                    target: new Vec3(0, 0, 0),
-                }, {
-                    name: 'move',
-                    type: AnimateType.add,
-                    field: AnimateField.Position,
-                    duration: 0.5,
-                    speed: null,
-                }],
-            },
+            particle: {asset: EXPLOSION_PARTICLE_ASSET, paramPayload: spaceshipType},
             sfx: {
                 assets: Spaceship.SFX_ASSETS,
                 channel: 1,
                 baseFolder: 'assets/sound/',
             },
         });
-        this.explosionNode.particle.setCallbacks(initExplosion, _ => true);
 
         switch (spaceshipOwner) {
             case SpaceshipOwner.player:
@@ -404,13 +307,13 @@ export class Spaceship {
 
     private shieldState: ShieldState = ShieldState.DOWN;
     private shieldStateTimer: number = Spaceship.SHIELD_REGEN_TIME;
-    static readonly SHIELD_RADIUS = 4.5;
-    private static readonly SHIELD_STROKE = 0.3;
-    private static readonly SHIELD_REGEN_TIME = 7;
-    private static readonly SHIELD_UP2DOWN_TIME = 0.4;
-    private static readonly SHIELD_DOWN2UP_TIME = 0.5;
-    private static readonly SHIELD_BASE_ALPHA = 0.5;
-    private static readonly SHIELD_PIECE_COUNT = 29;
+    public static readonly SHIELD_RADIUS = 4.5;
+    public static readonly SHIELD_STROKE = 0.3;
+    public static readonly SHIELD_REGEN_TIME = 7;
+    public static readonly SHIELD_UP2DOWN_TIME = 0.4;
+    public static readonly SHIELD_DOWN2UP_TIME = 0.5;
+    public static readonly SHIELD_BASE_ALPHA = 0.5;
+    public static readonly SHIELD_PIECE_COUNT = 29;
     isShieldUp(): boolean {
         return this.shieldState === ShieldState.UP || this.shieldState === ShieldState.DOWN_to_UP;
     }
@@ -509,6 +412,34 @@ export class Spaceship {
     }
 }
 
+const SHIELD_PARTICLE_PARAM = (spaceshipType: SpaceshipType): ParticleParam => {
+    return {
+        particleName: 'shield pieces',
+        drawable: {
+            asset: {
+                shape: 'rect',
+                fill: true,
+                width: Spaceship.SHIELD_STROKE * 2,
+                height: Spaceship.SHIELD_RADIUS * Math.PI * 2 / Spaceship.SHIELD_PIECE_COUNT,
+                stroke: false,
+                color: generateShieldColor(Spaceship.SHIELD_BASE_ALPHA),
+            },
+        },
+        animations: [{
+            name: 'move',
+            type: AnimateType.add,
+            field: AnimateField.Position,
+            duration: Spaceship.SHIELD_UP2DOWN_TIME,
+            speed: null, //filled in initBullet
+        }, {
+            name: 'scale',
+            type: AnimateType.lerp,
+            field: AnimateField.Scale,
+            duration: Spaceship.SHIELD_UP2DOWN_TIME,
+            target: new Vec3(0, 0.8, 0),
+        }],
+    };
+};
 function initShieldPiece(p: Particle, animations: Animation[], payload: { self: Spaceship, rad: number }) {
     let self = payload.self;
     let rad = payload.rad;
@@ -527,7 +458,34 @@ function initShieldPiece(p: Particle, animations: Animation[], payload: { self: 
     let speed = moveAnimation.speed = new Vec3();
     speed.setVec3(self.speed.add(new Vec3(r1, r2, 0)));
 }
+const SHIELD_PARTICLE_ASSET = new ParticleSystemAsset<SpaceshipType, { self: Spaceship, rad: number }>(
+    SHIELD_PARTICLE_PARAM,
+    initShieldPiece,
+    _=>true,
+);
 
+const BULLET_PARTICLE_PARAM = (spaceshipType: SpaceshipType): ParticleParam => {
+    return {
+        particleName: 'bullet',
+        drawable: {
+            asset: {
+                shape: 'rect',
+                fill: true,
+                width: 0,
+                height: 1,
+                stroke: 0.5,
+                color: spaceshipType.color,
+            },
+        },
+        animations: [{
+            name: 'fire',
+            type: AnimateType.add,
+            field: AnimateField.Position,
+            duration: 10000,
+            speed: null, //filled in initBullet
+        }],
+    };
+};
 function initBullet(p: Particle, animations: Animation[], self: Spaceship) {
     let moveAnimation = animations[0] as AnimationAdd;
     p.node.position.setVec3(self.position.add(self.rotateLocal(new Vec3(0, 3, 0))));
@@ -539,7 +497,40 @@ function initBullet(p: Particle, animations: Animation[], self: Spaceship) {
     speed.setVec3(self.rotateLocal(self.BULLET_FIRE_SPEED_DELTA));
     speed.setVec3(speed.add(self.speed));
 }
+const BULLET_PARTICLE_ASSET = new ParticleSystemAsset<SpaceshipType, Spaceship>(
+    BULLET_PARTICLE_PARAM,
+    initBullet,
+    p => isInScreen(p.node.position, 2),
+);
 
+const BUBBLE_PARTICLE_PARAM = (): ParticleParam => {
+    return {
+        particleName: 'bubble',
+        drawable: {
+            asset: {
+                shape: 'cone',
+                diameter: 0.8,
+                length: 1.0,
+                stroke: false,
+                color: 'rgba(255, 0, 0, 0.6)',
+                backface: 'rgba(255, 0, 0, 0)',
+            },
+        },
+        animations: [{
+            name: 'scale',
+            type: AnimateType.lerp,
+            field: AnimateField.Scale,
+            duration: 0.5,
+            target: new Vec3(0, 0, 0),
+        }, {
+            name: 'move',
+            type: AnimateType.add,
+            field: AnimateField.Position,
+            duration: 0.5,
+            speed: null,
+        }],
+    };
+};
 function initBubble(p: Particle, animations: Animation[], self: Spaceship) {
     let size = 1 + Math.random();
     let offsetX = Math.random() + Math.random() - 1;
@@ -553,7 +544,39 @@ function initBubble(p: Particle, animations: Animation[], self: Spaceship) {
     speed.setVec3(self.rotateLocal(self.BUBBLE_SPEED_DELTA));
     speed.setVec3(speed.add(self.speed));
 }
+const BUBBLE_PARTICLE_ASSET = new ParticleSystemAsset<{}, Spaceship>(
+    BUBBLE_PARTICLE_PARAM,
+    initBubble,
+    _ => true,
+);
 
+const EXPLOSION_PARTICLE_PARAM = (spaceshipType: SpaceshipType): ParticleParam => {
+    return {
+        particleName: 'explosion',
+        drawable: {
+            asset: {
+                shape: 'cone',
+                diameter: 1,
+                stroke: 0.2,
+                length: 0,
+                color: spaceshipType.color.replace('1.0)', '0.2)'),
+            },
+        },
+        animations: [{
+            name: 'scale',
+            type: AnimateType.lerp,
+            field: AnimateField.Scale,
+            duration: 0.5,
+            target: new Vec3(0, 0, 0),
+        }, {
+            name: 'move',
+            type: AnimateType.add,
+            field: AnimateField.Position,
+            duration: 0.5,
+            speed: null,
+        }],
+    };
+};
 function initExplosion(p: Particle, animations: Animation[], payload: { self: Spaceship, explosionPoint: Vec3 }) {
     let self = payload.self;
     let explosionPoint = payload.explosionPoint;
@@ -574,3 +597,8 @@ function initExplosion(p: Particle, animations: Animation[], payload: { self: Sp
     let speed = moveAnimation.speed = new Vec3(nx * speedScalar, ny * speedScalar, 0);
     speed.setVec3(speed.add(self.speed));
 }
+const EXPLOSION_PARTICLE_ASSET = new ParticleSystemAsset<SpaceshipType, { self: Spaceship, explosionPoint: Vec3 }>(
+    EXPLOSION_PARTICLE_PARAM,
+    initExplosion,
+    _ => true,
+);
