@@ -54,7 +54,6 @@ async function start() {
     });
     node.particle.setCallbacks(
         (p, animations, _) => {
-            let moveAnimation = animations[0] as AnimationAdd;
             //TODO auto reset?
             p.node.position.set(0,0,0);
             p.node.scale.set(1, 1, 1);

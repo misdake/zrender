@@ -129,7 +129,7 @@ export class Spaceship {
                 },
             });
             this.shield2Node.particle.setCallbacks(
-                (p, animations, rad) => this.initShieldPiece(p, animations, rad),
+                (p, animations, payload) => Spaceship.initShieldPiece(p, animations, payload),
                 _ => true,
             );
         }
@@ -162,7 +162,7 @@ export class Spaceship {
             },
         });
         this.bulletNode.particle.setCallbacks(
-            (p, animations) => this.initBullet(p, animations),
+            (p, animations, self) => Spaceship.initBullet(p, animations, self),
             p => isInScreen(p.node.position, 2),
         );
 
@@ -195,7 +195,7 @@ export class Spaceship {
             },
         });
         this.bubbleNode.particle.setCallbacks(
-            (p, animations) => this.initBubble(p, animations),
+            (p, animations, self: Spaceship) => Spaceship.initBubble(p, animations, self),
             _ => true,
         );
 
@@ -232,7 +232,7 @@ export class Spaceship {
             },
         });
         this.explosionNode.particle.setCallbacks(
-            (p, animations, payload) => this.initExplosion(p, animations, payload),
+            (p, animations, payload) => Spaceship.initExplosion(p, animations, payload),
             _ => true,
         );
 
@@ -411,18 +411,18 @@ export class Spaceship {
     private bulletRecoilSpeedDelta = new Vec3(0, -1, 0);
     private bulletFireSpeedDelta = new Vec3(0, 50, 0);
     private fire() {
-        this.bulletNode.particle.spawn();
+        this.bulletNode.particle.spawn(this);
     }
-    private initBullet(p: Particle, animations: Animation[]) {
+    private static initBullet(p: Particle, animations: Animation[], self: Spaceship) {
         let moveAnimation = animations[0] as AnimationAdd;
-        p.node.position.setVec3(this.position.add(this.rotateLocal(new Vec3(0, 3, 0))));
-        p.node.rotation.z = -this.rot;
+        p.node.position.setVec3(self.position.add(self.rotateLocal(new Vec3(0, 3, 0))));
+        p.node.rotation.z = -self.rot;
 
-        this.speed.setVec3(this.speed.add(this.rotateLocal(this.bulletRecoilSpeedDelta)));
+        self.speed.setVec3(self.speed.add(self.rotateLocal(self.bulletRecoilSpeedDelta)));
 
         let speed = moveAnimation.speed = new Vec3();
-        speed.setVec3(this.rotateLocal(this.bulletFireSpeedDelta));
-        speed.setVec3(speed.add(this.speed));
+        speed.setVec3(self.rotateLocal(self.bulletFireSpeedDelta));
+        speed.setVec3(speed.add(self.speed));
 
         p.data = this;
     }
@@ -485,35 +485,42 @@ export class Spaceship {
 
         let bias = Math.PI * 2 * Math.random();
         for (let i = 0; i < Spaceship.SHIELD_PIECE_COUNT; i++) {
-            this.shield2Node.particle.spawn(bias + Math.PI * 2 * i / Spaceship.SHIELD_PIECE_COUNT);
+            this.shield2Node.particle.spawn({self: this, rad: bias + Math.PI * 2 * i / Spaceship.SHIELD_PIECE_COUNT});
         }
         this.shield2Node.sfx.play(Spaceship.SFX_ASSETS_SHIELD.down, 0.5, false);
     }
-    private initShieldPiece(p: Particle, animations: Animation[], rad: number) {
+    private static initShieldPiece(p: Particle, animations: Animation[], payload: {self: Spaceship, rad: number}) {
+        let self = payload.self;
+        let rad = payload.rad;
+
         let moveAnimation = animations[0] as AnimationAdd;
         let dx = Math.cos(rad);
         let dy = Math.sin(rad);
         let radius = Spaceship.SHIELD_RADIUS;
-        p.node.position.setVec3(this.position.add(new Vec3(dx * radius, dy * radius, 0)));
+        p.node.position.setVec3(self.position.add(new Vec3(dx * radius, dy * radius, 0)));
         p.node.rotation.z = rad;
         p.node.scale.set(1, 1, 1);
-        (p.node.drawable.zdog as Rect).color = (this.shield1Node.drawable.zdog as Ellipse).color;
+        (p.node.drawable.zdog as Rect).color = (self.shield1Node.drawable.zdog as Ellipse).color;
 
         let r1 = dx * 2 + Math.random() * 1.5;
         let r2 = dy * 2 + Math.random() * 1.5;
         let speed = moveAnimation.speed = new Vec3();
-        speed.setVec3(this.speed.add(new Vec3(r1, r2, 0)));
+        speed.setVec3(self.speed.add(new Vec3(r1, r2, 0)));
     }
 
     private explosionParticleCount = 20;
     explode(explosionPoint: Vec3) {
         this.explosionNode.particle.clear();
+        let payload = {self: this, explosionPoint};
         for (let i = 0; i < this.explosionParticleCount; i++) {
-            this.explosionNode.particle.spawn(explosionPoint);
+            this.explosionNode.particle.spawn(payload);
         }
         this.explosionNode.sfx.play(Spaceship.SFX_ASSETS.explosion, 0.6);
     }
-    private initExplosion(p: Particle, animations: Animation[], explosionPoint: Vec3) {
+    private static initExplosion(p: Particle, animations: Animation[], payload: {self: Spaceship, explosionPoint: Vec3}) {
+        let self = payload.self;
+        let explosionPoint = payload.explosionPoint;
+
         let moveAnimation = animations[1] as AnimationAdd;
         let direction = Math.random() * Math.PI * 2;
         let nx = Math.cos(direction);
@@ -522,13 +529,13 @@ export class Spaceship {
 
         p.time = Math.random() * 0.4 - 0.2;
         p.node.scale.set(10, 10, 10);
-        p.node.position.setVec3(explosionPoint.add(this.speed.mul_scalar(-p.time / 2)));
+        p.node.position.setVec3(explosionPoint.add(self.speed.mul_scalar(-p.time / 2)));
         if (p.time < 0) {
             p.node.scale.setVec3(p.node.scale.mul_scalar(1 / (1 - p.time)));
         }
 
         let speed = moveAnimation.speed = new Vec3(nx * speedScalar, ny * speedScalar, 0);
-        speed.setVec3(speed.add(this.speed));
+        speed.setVec3(speed.add(self.speed));
 
         p.data = this;
     }
@@ -543,21 +550,21 @@ export class Spaceship {
         }
     }
     private emitBubble() {
-        this.bubbleNode.particle.spawn();
+        this.bubbleNode.particle.spawn(this);
     }
     private bubbleSpeedDelta = new Vec3(0, -35, 0);
-    private initBubble(p: Particle, animations: Animation[]) {
+    private static initBubble(p: Particle, animations: Animation[], self: Spaceship) {
         let size = 1 + Math.random();
         let offsetX = Math.random() + Math.random() - 1;
         let offsetY = (Math.random() * 2 - 1) * 0.2;
-        p.node.position.setVec3(this.position.add(this.rotateLocal(new Vec3(offsetX, -1.5 + offsetY, 0))));
+        p.node.position.setVec3(self.position.add(self.rotateLocal(new Vec3(offsetX, -1.5 + offsetY, 0))));
         p.node.scale.set(size, size, size);
-        p.node.rotation.set(Math.PI / 2, this.rot, 0);
+        p.node.rotation.set(Math.PI / 2, self.rot, 0);
 
         let moveAnimation = animations[1] as AnimationAdd;
         let speed = moveAnimation.speed = new Vec3();
-        speed.setVec3(this.rotateLocal(this.bubbleSpeedDelta));
-        speed.setVec3(speed.add(this.speed));
+        speed.setVec3(self.rotateLocal(self.bubbleSpeedDelta));
+        speed.setVec3(speed.add(self.speed));
     }
 
     getShipShape(): Polygon2d {

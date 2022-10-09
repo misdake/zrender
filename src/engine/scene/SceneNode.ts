@@ -103,17 +103,4 @@ export class SceneNode extends EventDispatcher {
             child.afterTick(dt);
         }
     }
-
-    setPosition(x?: number, y?: number, z?: number): SceneNode {
-        this.position.set(x, y, z);
-        return this;
-    }
-    setRotation(x?: number, y?: number, z?: number): SceneNode {
-        this.rotation.set(x, y, z);
-        return this;
-    }
-    setScale(x?: number, y?: number, z?: number): SceneNode {
-        this.scale.set(x, y, z);
-        return this;
-    }
 }
