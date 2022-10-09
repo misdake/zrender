@@ -1,8 +1,7 @@
 import { Component } from './Component';
 import { DrawableParam } from './Drawable';
-import { Vec3 } from '../util/Vec3';
 import { SceneNode } from '../scene/SceneNode';
-import { animationUpdate, Animation, animationInit, AnimationAsset, animationFillSrc } from './Animation';
+import { Animation, AnimationAsset, animationFillSrc, animationInit, animationUpdate } from './Animation';
 
 export interface ParticleParam {
     particleName: string,
@@ -13,7 +12,6 @@ export interface ParticleParam {
 
 export class Particle {
     readonly node: SceneNode;
-    data: any;
 
     animations: Animation[];
     time: number;
@@ -46,7 +44,6 @@ export class Particle {
 }
 
 export class ParticleSystem extends Component {
-
     private enabled: Particle[] = [];
     private disabled: Particle[] = [];
 
@@ -69,7 +66,7 @@ export class ParticleSystem extends Component {
             node.addChild(this.spawnParent);
         }
     }
-    spawn(payload?: any) {
+    spawn(payload: any) {
         let particle: Particle;
         if (this.disabled.length) {
             particle = this.disabled[this.disabled.length - 1];
@@ -110,9 +107,9 @@ export class ParticleSystem extends Component {
         this.enabled.length = 0;
     }
 
-    private initFunc: (p: Particle, animations: Animation[], payload?: any) => void;
+    private initFunc: (p: Particle, animations: Animation[], payload: any) => void;
     private checkFunc: (p: Particle) => boolean;
-    setCallbacks(init: (p: Particle, animations: Animation[], payload?: any) => void, check: (p: Particle) => boolean) {
+    setCallbacks(init: (p: Particle, animations: Animation[], payload: any) => void, check: (p: Particle) => boolean) {
         this.initFunc = init;
         this.checkFunc = check;
     }

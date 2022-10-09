@@ -72,7 +72,7 @@ async function start() {
         time += dt;
         if (time - last > 1) {
             last = time;
-            node.particle.spawn()
+            node.particle.spawn({})
             console.log("spawn");
         }
     });
